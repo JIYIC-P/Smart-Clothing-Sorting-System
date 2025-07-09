@@ -67,7 +67,7 @@ class ThreadedCamera(object):
         """集中处理所有 cv2 相关的图像操作"""
         if frame is None:
             return None
-         width = int(frame.shape[1])
+        width = int(frame.shape[1])
         height = int(frame.shape[0])
         frame= frame[(height/2)-240:(height/2)+240, (width/2)-320:(width/2)+320]  # 裁剪中心区域
         # 示例预处理步骤（根据实际需求调整）

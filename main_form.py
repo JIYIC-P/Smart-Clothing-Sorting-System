@@ -50,8 +50,9 @@ class Dialog(QDialog,Ui_Dialog):
     def __init__(self, parent=None):
         
         super(Dialog, self).__init__(parent)
+        self.mode = "color"
         self.mbus = mbs.MBUS()
-        self.camera = False
+        self.camera = True
         self.Ui_init()
         self.Timer_init()
         self.camera_init()
@@ -67,7 +68,8 @@ class Dialog(QDialog,Ui_Dialog):
             self.streamer = ThreadedCamera(stream_link)
             self.streamer.open_cam()
             self.streamer.source=0
-            self.model = YOLO("yolov8n.pt")
+            if self.mode == "shape":
+                self.model = YOLO("yolov8n.pt")
 
     def Timer_init(self):
         self.run_time_sec=0
@@ -206,39 +208,46 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def show_img(self):
         if self.camera:
-            frame = self.streamer.grab_frame()
-            img_yolo = self.model(frame, verbose=False)
-            for result in img_yolo:
-            # 获取检测到的类别、置信度、边界框
-                for box in result.boxes:
-                    class_id = int(box.cls)  # 类别ID
-                    class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
-                    self.obj.append(class_name)  # 将检测到的目标添加到列表中
-                    self.obj.del(0)  # 删除第一个元素
-                    confidence = float(box.conf)  # 置信度（0~1）
-                    x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
+            if self.mode == "shape":
+                frame = self.streamer.grab_frame()
+                img_yolo = self.model(frame, verbose=False)
+                for result in img_yolo:
+                # 获取检测到的类别、置信度、边界框
+                    for box in result.boxes:
+                        class_id = int(box.cls)  # 类别ID
+                        class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
+                        self.obj.append(class_name)  # 将检测到的目标添加到列表中
+                        self.obj.pop(0)
+                        confidence = float(box.conf)  # 置信度（0~1）
+                        x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
 
-                    print(f"检测到: {class_name}, 可信度: {confidence:.2f}, 位置: {x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}")
-                    
-                    # 可以在这里做进一步处理，比如筛选高置信度的目标
-                    if confidence > 0.6:
-                        print(f"高可信度目标: {class_name} ({confidence:.2f})")
+                        print(f"检测到: {class_name}, 可信度: {confidence:.2f}, 位置: {x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}")
+                        
+                        # 可以在这里做进一步处理，比如筛选高置信度的目标
+                        if confidence > 0.6:
+                            print(f"高可信度目标: {class_name} ({confidence:.2f})")
 
-            frame = img_yolo[0].plot()    
-            if frame is not None:
-                img = frame
-                show_image =img
-                len_x = show_image.shape[1]  # 获取图像大小
-                wid_y = show_image.shape[0]
-                frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                pix = QPixmap.fromImage(frame)   
-                pix = pix.scaledToWidth(480)
-                self.label_2.setPixmap (pix)  # 在label上显示图片
-    @pyqtSlot()
+                frame = img_yolo[0].plot()    
+                if frame is not None:
+                    img = frame
+                    show_image =img
+                    len_x = show_image.shape[1]  # 获取图像大小
+                    wid_y = show_image.shape[0]
+                    frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                    pix = QPixmap.fromImage(frame)   
+                    pix = pix.scaledToWidth(480)
+                    self.label_2.setPixmap (pix)  # 在label上显示图片
+            elif self.mode == "color":
+                self.show_color()
+
+
     def show_color(self):
-        
         frame = self.streamer.grab_frame()
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # 转为HSV空间
+        print(frame)
+        if frame is None :
+            time.sleep(0.1)
+            return
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  
         results = {}
     
         for color_name, (lower, upper) in color_ranges.items():
@@ -254,7 +263,8 @@ class Dialog(QDialog,Ui_Dialog):
         if results:
             dominant_color = max(results, key=results.get) 
             self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
-            self.obj.del(0)  # 删除第一个元素
+            print(dominant_color)
+            self.obj.pop(0)  # 删除第一个元素
         else:
             dominant_color = None  # 如果没有检测到任何颜色   
         if frame is not None:
