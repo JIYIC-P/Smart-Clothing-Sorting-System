@@ -1,7 +1,15 @@
 import time
 import sys
 from Ui_main_form import Ui_Dialog 
-
+import cv2
+import numpy as np
+#颜色范围定义
+color_ranges = {
+    "red":    ([0, 100, 100], [10, 255, 255]),      # 红色范围
+    "green":  ([40, 50, 50], [80, 255, 255]),       # 绿色范围
+    "blue":   ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
+    "yellow": ([20, 100, 100], [30, 255, 255]),     # 黄色范围
+}
 # Qt核心模块
 from PyQt5.QtCore import (
     Qt,
