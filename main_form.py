@@ -205,6 +205,7 @@ class Dialog(QDialog,Ui_Dialog):
                 for box in result.boxes:
                     class_id = int(box.cls)  # 类别ID
                     class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
+                    self.obj.append(class_name)  # 将检测到的目标添加到列表中
                     confidence = float(box.conf)  # 置信度（0~1）
                     x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
 
@@ -224,12 +225,41 @@ class Dialog(QDialog,Ui_Dialog):
                 pix = QPixmap.fromImage(frame)   
                 pix = pix.scaledToWidth(480)
                 self.label_2.setPixmap (pix)  # 在label上显示图片
-
-
+    @pyqtSlot()
+    def show_color(self):
+        
+        frame = self.streamer.grab_frame()
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # 转为HSV空间
+        results = {}
+    
+        for color_name, (lower, upper) in color_ranges.items():
+            # 创建颜色掩膜
+            lower = np.array(lower, dtype=np.uint8)
+            upper = np.array(upper, dtype=np.uint8)
+            mask = cv2.inRange(hsv, lower, upper)
+            
+            # 统计非零像素（颜色区域大小）
+            pixel_count = cv2.countNonZero(mask)
+            results[color_name] = pixel_count
+            
+        if results:
+            dominant_color = max(results, key=results.get) 
+            self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
+        else:
+            dominant_color = None  # 如果没有检测到任何颜色   
+        if frame is not None:
+            img = frame
+            show_image =img
+            len_x = show_image.shape[1]  # 获取图像大小
+            wid_y = show_image.shape[0]
+            frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+            pix = QPixmap.fromImage(frame)   
+            pix = pix.scaledToWidth(480)
+            self.label_2.setPixmap (pix)  # 在label上显示图片
 
     @pyqtSlot()
     def showTime(self):
-        """
+        """   
         Slot documentation goes here.
         """
         # TODO: not implemented yet
