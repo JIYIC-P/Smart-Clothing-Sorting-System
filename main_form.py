@@ -47,7 +47,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.Ui_init()
         self.Timer_init()
         self.camera_init()
-        self.obj = None
+        self.obj = [0,0,0,0,0,0]
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
@@ -206,6 +206,7 @@ class Dialog(QDialog,Ui_Dialog):
                     class_id = int(box.cls)  # 类别ID
                     class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
                     self.obj.append(class_name)  # 将检测到的目标添加到列表中
+                    self.obj.del(0)  # 删除第一个元素
                     confidence = float(box.conf)  # 置信度（0~1）
                     x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
 
@@ -245,6 +246,7 @@ class Dialog(QDialog,Ui_Dialog):
         if results:
             dominant_color = max(results, key=results.get) 
             self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
+            self.obj.del(0)  # 删除第一个元素
         else:
             dominant_color = None  # 如果没有检测到任何颜色   
         if frame is not None:
