@@ -132,7 +132,7 @@ class Dialog(QDialog,Ui_Dialog):
         # 设置列宽
         self.tableWidget.setColumnWidth(0, 120)    # 参数名
         self.tableWidget.setColumnWidth(1, 160)   # 参数值
-        self.tableWidget.setColumnWidth(2, 320)   # 备注
+        self.tableWidget.setColumnWidth(2, 450)   # 备注
         
         # 禁用排序
         self.tableWidget.setSortingEnabled(False)
