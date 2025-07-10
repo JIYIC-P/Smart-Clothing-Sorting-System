@@ -289,9 +289,6 @@ class Dialog(QDialog,Ui_Dialog):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         s = hsv[:, :, 1]  # 饱和度通道
         v = hsv[:, :, 2]  # 明度通道
-
-
-
         # 分类掩膜
         white_mask = (s < s_low) & (v > 200)      # 白色：低饱和度 + 高明度
         light_mask = (s >= s_low) & (s < s_high)  # 浅色：中等饱和度
@@ -299,9 +296,9 @@ class Dialog(QDialog,Ui_Dialog):
 
         # 统计各类像素数量
         results = {
-            1: cv2.countNonZero(white_mask.astype(np.uint8)),
-            2: cv2.countNonZero(light_mask.astype(np.uint8)),
-            3: cv2.countNonZero(dark_mask.astype(np.uint8))
+            1: cv2.countNonZero(white_mask.astype(np.uint8)),#大白
+            2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
+            3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
         }
 
         # 根据线圈状态记录结果
@@ -310,6 +307,7 @@ class Dialog(QDialog,Ui_Dialog):
                 dominant_category = max(results, key=results.get)
                 self.obj.append(dominant_category)  # 添加到列表
                 self.obj.pop(0)  # 删除第一个元素
+                print(self.obj)
             else:
                 dominant_category = None  # 无分类结果
 
