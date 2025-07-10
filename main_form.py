@@ -243,8 +243,7 @@ class Dialog(QDialog,Ui_Dialog):
             pix = pix.scaledToWidth(480)
             self.label_2.setPixmap (pix)  # 在label上显示图片
 
-    def color(self):
-        frame = self.streamer.grab_frame()
+    def color(self,frame):
         if frame is None:
             time.sleep(0.1)
             return
