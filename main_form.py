@@ -243,7 +243,6 @@ class Dialog(QDialog,Ui_Dialog):
 
     def show_color(self):
         frame = self.streamer.grab_frame()
-        print(frame)
         if frame is None :
             time.sleep(0.1)
             return
@@ -264,7 +263,6 @@ class Dialog(QDialog,Ui_Dialog):
             if results:
                 dominant_color = max(results, key=results.get) 
                 self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
-                print(dominant_color)
                 self.obj.pop(0)  # 删除第一个元素
             else:
                 dominant_color = None  # 如果没有检测到任何颜色   
