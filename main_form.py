@@ -1,7 +1,19 @@
 import time
 import sys
 from Ui_main_form import Ui_Dialog 
-
+import cv2
+import numpy as np
+#颜色范围定义
+color_ranges = {
+    1 :    ([0, 100, 100], [10, 255, 255]),      # 红色范围
+    2 :  ([40, 50, 50], [80, 255, 255]),       # 绿色范围
+    3 :   ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
+    4 : ([20, 100, 100], [30, 255, 255]),     # 黄色范围
+}
+# 定义阈值（可根据需求调整）
+s_low = 30    # 低饱和度阈值（白色）
+s_high = 150  # 高饱和度阈值（深色）
+v_low = 50    # 低明度阈值（深色）
 # Qt核心模块
 from PyQt5.QtCore import (
     Qt,
@@ -42,12 +54,13 @@ class Dialog(QDialog,Ui_Dialog):
     def __init__(self, parent=None):
         
         super(Dialog, self).__init__(parent)
+        self.mode = "color"
         self.mbus = mbs.MBUS()
-        self.camera = False
+        self.camera = True
         self.Ui_init()
         self.Timer_init()
         self.camera_init()
-        self.obj = None
+
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
@@ -59,7 +72,8 @@ class Dialog(QDialog,Ui_Dialog):
             self.streamer = ThreadedCamera(stream_link)
             self.streamer.open_cam()
             self.streamer.source=0
-            self.model = YOLO("yolov8n.pt")
+            if self.mode == "shape":
+                self.model = YOLO("yolov8n.pt")
 
     def Timer_init(self):
         self.run_time_sec=0
@@ -132,7 +146,7 @@ class Dialog(QDialog,Ui_Dialog):
         # 设置列宽
         self.tableWidget.setColumnWidth(0, 120)    # 参数名
         self.tableWidget.setColumnWidth(1, 160)   # 参数值
-        self.tableWidget.setColumnWidth(2, 320)   # 备注
+        self.tableWidget.setColumnWidth(2, 450)   # 备注
         
         # 禁用排序
         self.tableWidget.setSortingEnabled(False)
@@ -198,38 +212,125 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def show_img(self):
         if self.camera:
-            frame = self.streamer.grab_frame()
-            img_yolo = self.model(frame, verbose=False)
-            for result in img_yolo:
-            # 获取检测到的类别、置信度、边界框
-                for box in result.boxes:
-                    class_id = int(box.cls)  # 类别ID
-                    class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
-                    confidence = float(box.conf)  # 置信度（0~1）
-                    x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
+            if self.mode == "shape":
+                frame = self.streamer.grab_frame()
+                img_yolo = self.model(frame, verbose=False)
+                for result in img_yolo:
+                # 获取检测到的类别、置信度、边界框
+                    for box in result.boxes:
+                        class_id = int(box.cls)  # 类别ID
+                        class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
+                        confidence = float(box.conf)  # 置信度（0~1）
+                        x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
 
-                    print(f"检测到: {class_name}, 可信度: {confidence:.2f}, 位置: {x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}")
-                    
-                    # 可以在这里做进一步处理，比如筛选高置信度的目标
-                    if confidence > 0.6:
-                        print(f"高可信度目标: {class_name} ({confidence:.2f})")
+                        print(f"检测到: {class_name}, 可信度: {confidence:.2f}, 位置: {x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}")
+                        
+                        # 可以在这里做进一步处理，比如筛选高置信度的目标
+                        if confidence > 0.6:
+                            print(f"高可信度目标: {class_name} ({confidence:.2f})")
 
-            frame = img_yolo[0].plot()    
-            if frame is not None:
-                img = frame
-                show_image =img
-                len_x = show_image.shape[1]  # 获取图像大小
-                wid_y = show_image.shape[0]
-                frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                pix = QPixmap.fromImage(frame)   
-                pix = pix.scaledToWidth(480)
-                self.label_2.setPixmap (pix)  # 在label上显示图片
+                frame = img_yolo[0].plot()    
+                if frame is not None:
+                    img = frame
+                    show_image =img
+                    len_x = show_image.shape[1]  # 获取图像大小
+                    wid_y = show_image.shape[0]
+                    frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                    pix = QPixmap.fromImage(frame)   
+                    pix = pix.scaledToWidth(480)
+                    self.label_2.setPixmap (pix)  # 在label上显示图片
+            elif self.mode == "color":
+                self.show_color()
 
 
+    # def show_color(self):
+    #     frame = self.streamer.grab_frame()
+    #     if frame is None :
+    #         time.sleep(0.1)
+    #         return
+    #     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  
+    #     results = {}
+    
+    #     for color_name, (lower, upper) in color_ranges.items():
+    #         # 创建颜色掩膜
+    #         lower = np.array(lower, dtype=np.uint8)
+    #         upper = np.array(upper, dtype=np.uint8)
+    #         mask = cv2.inRange(hsv, lower, upper)
+            
+    #         # 统计非零像素（颜色区域大小）
+    #         pixel_count = cv2.countNonZero(mask)
+    #         results[color_name] = pixel_count
+            
+    #     if self.mbus.coils[0]==1:
+    #         if results:
+    #             dominant_color = max(results, key=results.get) 
+    #             self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
+    #             self.obj.pop(0)  # 删除第一个元素
+    #         else:
+    #             dominant_color = None  # 如果没有检测到任何颜色   
+    #     if frame is not None:
+    #         img = frame
+    #         show_image =img
+    #         len_x = show_image.shape[1]  # 获取图像大小
+    #         wid_y = show_image.shape[0]
+    #         frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+    #         pix = QPixmap.fromImage(frame)   
+    #         pix = pix.scaledToWidth(480)
+    #         self.label_2.setPixmap (pix)  # 在label上显示图片
+
+    def show_color(self):
+        frame = self.streamer.grab_frame()
+        if frame is None:
+            time.sleep(0.1)
+            return
+        
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        s = hsv[:, :, 1]  # 饱和度通道
+        v = hsv[:, :, 2]  # 明度通道
+        # 分类掩膜
+        white_mask = (s < s_low) & (v > 200)      # 白色：低饱和度 + 高明度
+        light_mask = (s >= s_low) & (s < s_high)  # 浅色：中等饱和度
+        dark_mask = (s >= s_high) | (v < v_low)   # 深色：高饱和度 或 低明度
+
+        # 统计各类像素数量
+        results = {
+            1: cv2.countNonZero(white_mask.astype(np.uint8)),#大白
+            2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
+            3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
+        }
+        # 根据线圈状态记录结果
+        if self.mbus.registers[0] == 1:
+            if results:
+                dominant_category = max(results, key=results.get)
+                self.mbus.obj.append(dominant_category)  # 添加到列表
+                self.mbus.obj.pop(0)  # 删除第一个元素
+                time.sleep(2.5)
+                print(self.mbus.obj)
+            else:
+                dominant_category = None  # 无分类结果
+
+        # 显示图像（可选：用颜色标记分类结果）
+        if frame is not None:
+            classified = np.zeros_like(frame)
+            classified[white_mask] = [255, 255, 255]  # 白色
+            classified[light_mask] = [200, 200, 200]  # 浅色（灰色）
+            classified[dark_mask] = [50, 50, 50]      # 深色（深灰）
+
+            # 转换为QImage并显示
+            height, width = classified.shape[:2]
+            qimage = QImage(
+                classified.data, 
+                width, 
+                height, 
+                width * 3, 
+                QImage.Format_RGB888
+            )
+            pixmap = QPixmap.fromImage(qimage).scaledToWidth(480)
+            self.label_2.setPixmap(pixmap)
 
     @pyqtSlot()
     def showTime(self):
-        """
+        """   
         Slot documentation goes here.
         """
         # TODO: not implemented yet

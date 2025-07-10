@@ -24,6 +24,7 @@ class MBUS():
         self.config = []
         self.distance = []
         self.values = [0,0,0,0,0]
+        self.obj = [0,0,0,0,0,0]
         #电机运动参数
 
         self.ADR_IN = 0
@@ -143,10 +144,42 @@ class MBUS():
                 1,
                 fnc.READ_INPUT_REGISTERS,
                 self.ADR_IN,
-                self.NUM_IN
+                self.NUM_IN 
             )
+            self.recognize()
         except Exception as e:
-                print(f"输入寄存器错误: {e}")
+            print(f"输入寄存器错误: {e}")
+    def recognize(self):
+            print ("re:",self.registers,"\nobj:",self.obj)
+            signal = 0
+            if self.registers[1] == 1:
+                if self.obj[4] == 1:
+                    self.values[0] = 62580
+                    signal = 1
+
+            if self.registers[2] == 1:
+                if self.obj[3] == 2:
+                    self.values[1] = 62580
+                    signal =1
+                else :
+                    self.obj[3] = 0
+            if signal == 1:
+                self.coil_once()
+
+            # if self.registers[3] == 1:
+            #     if self.obj[2] == 1:
+            #         self.values[2] = 62580
+
+            # if self.registers[4] == 1:
+            #     if self.obj[1] == 1:
+            #         self.values[3] = 62580
+
+            # if self.registers[5] == 1:
+            #     if self.obj[0] == 1:
+            #         self.values[4] = 62580
+            #self.func = 1
+
+
     def beating(self):
         """
         心跳发送指令：默认读取输入，如果传参则写/设置
@@ -162,7 +195,6 @@ class MBUS():
             func = self.func
             if func == 0:
                 self.in_once()
-                print("test in")
             elif func == 1:
                 self.coil_once()
                 self.func = 0
@@ -201,6 +233,14 @@ class MBUS():
                 starting_address=self.ADR_COIL,
                 quantity_of_x=self.NUM_COIL,
                 output_value=VALUES
+            )
+            time.sleep(0.6)
+            self.master.execute(
+                1,
+                fnc.WRITE_MULTIPLE_COILS,
+                starting_address=self.ADR_COIL,
+                quantity_of_x=self.NUM_COIL,
+                output_value=[0,0,0,0,0,0]
             )
         except Exception as e:
                 print(f"控制失败: {e}")
@@ -256,8 +296,8 @@ def main():
 
     # ser.set_speed()
     # ser.set_distance()
-    ser.set_salarate(2,4000)
-    ser.set_salarate(3,2000)
+    # ser.set_salarate(2,4000)
+    # ser.set_salarate(3,2000)
 
     time.sleep(1)
 
