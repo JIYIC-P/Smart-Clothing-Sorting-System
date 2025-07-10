@@ -10,7 +10,6 @@ class ThreadedCamera(object):
         self.capture = None
         self.status = False
         self.frame = None
-        #self.aa = "t1=" + time.strftime("%Y-%m-%d %H:%M:%S")
         self._running = True  # 新增：线程运行控制标志
         self.thread = Thread(target=self.update, args=())
         self.thread.daemon = True
@@ -42,7 +41,6 @@ class ThreadedCamera(object):
                 
                 if self.status:
                     self.frame = self._process_frame(frame)
-                    #self.aa = "t1=" + time.strftime("%Y-%m-%d %H:%M:%S")
                 else:
                     self.capture.release()  # 释放旧资源
                     self.capture = cv2.VideoCapture(self.source)
