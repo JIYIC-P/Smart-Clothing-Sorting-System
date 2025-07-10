@@ -24,7 +24,8 @@ class MBUS():
         self.config = []
         self.distance = []
         self.values = [0,0,0,0,0]
-        self.obj = [0,0,0,0,0,0]
+        self.l_in = [0,0,0,0,0,0]
+        self.l_out = [0,0,0,0,0]
         #电机运动参数
 
         self.ADR_IN = 0

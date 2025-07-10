@@ -5,9 +5,9 @@ import cv2
 import numpy as np
 #颜色范围定义
 color_ranges = {
-    1 :    ([0, 100, 100], [10, 255, 255]),      # 红色范围
-    2 :  ([40, 50, 50], [80, 255, 255]),       # 绿色范围
-    3 :   ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
+    1 : ([0, 100, 100], [10, 255, 255]),      # 红色范围
+    2 : ([40, 50, 50], [80, 255, 255]),       # 绿色范围
+    3 : ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
     4 : ([20, 100, 100], [30, 255, 255]),     # 黄色范围
 }
 # 定义阈值（可根据需求调整）
@@ -266,24 +266,13 @@ class Dialog(QDialog,Ui_Dialog):
             2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
             3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
         }
-        # 根据线圈状态记录结果
-        if self.mbus.registers[0] == 1:
-            if results:
-                dominant_category = max(results, key=results.get)
-                self.mbus.obj.append(dominant_category)  # 添加到列表
-                self.mbus.obj.pop(0)  # 删除第一个元素
-                time.sleep(2.5)
-                print(self.mbus.obj)
-            else:
-                dominant_category = None  # 无分类结果
-
+        self.control(results)
         # 显示图像（可选：用颜色标记分类结果）
         if frame is not None:
             classified = np.zeros_like(frame)
             classified[white_mask] = [255, 255, 255]  # 白色
             classified[light_mask] = [200, 200, 200]  # 浅色（灰色）
             classified[dark_mask] = [50, 50, 50]      # 深色（深灰）
-
             # 转换为QImage并显示
             height, width = classified.shape[:2]
             qimage = QImage(
@@ -296,7 +285,18 @@ class Dialog(QDialog,Ui_Dialog):
             pixmap = QPixmap.fromImage(qimage).scaledToWidth(480)
             self.label_2.setPixmap(pixmap)
 
-  
+    def control(self,results):
+        # 根据线圈状态记录结果
+        if self.mbus.registers[0] == 1:
+            if results:
+                dominant_category = max(results, key=results.get)
+                self.mbus.obj.append(dominant_category)  # 添加到列表
+                self.mbus.obj.pop(0)  # 删除第一个元素
+                time.sleep(2.5)
+                print(self.mbus.obj)
+            else:
+                dominant_category = None  # 无分类结果
+
   # @pyqtSlot()
   # def showTime(self):
   #     """   
