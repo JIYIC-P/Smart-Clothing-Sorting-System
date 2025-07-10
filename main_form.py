@@ -266,13 +266,8 @@ class Dialog(QDialog,Ui_Dialog):
         if self.mbus.registers[0] == 1:
             if results:
                 dominant_category = max(results, key=results.get)
-
-
                 self.mbus.obj.append(dominant_category)  # 添加到列表
                 self.mbus.obj.pop(0)  # 删除第一个元素
-                
-                
-                
                 time.sleep(2.5)
                 print(self.mbus.obj)
             else:
