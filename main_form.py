@@ -298,7 +298,7 @@ class Dialog(QDialog,Ui_Dialog):
             2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
             3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
         }
-
+        print(max(results, key=results.get))
         # 根据线圈状态记录结果
         if self.mbus.registers[0] == 1:
             if results:
