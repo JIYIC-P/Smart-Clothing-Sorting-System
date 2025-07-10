@@ -292,7 +292,7 @@ class Dialog(QDialog,Ui_Dialog):
                 dominant_category = max(results, key=results.get)
                 self.mbus.obj.append(dominant_category)  # 添加到列表
                 self.mbus.obj.pop(0)  # 删除第一个元素
-                time.sleep(2.5)
+                QTimer.singleShot(2500)
                 print(self.mbus.obj)
             else:
                 dominant_category = None  # 无分类结果
@@ -497,7 +497,6 @@ class Dialog(QDialog,Ui_Dialog):
         print("插入行:", cfg_name, cfg_dat, cfg_beizhu)
         row = self.tableWidget.rowCount()
         self.tableWidget.insertRow(row)  # 使用insertRow而不是setRowCount
-        
         # 设置各列数据
         self.tableWidget.setItem(row, 0, QTableWidgetItem(cfg_name))
         self.tableWidget.setItem(row, 1, QTableWidgetItem(cfg_dat))
