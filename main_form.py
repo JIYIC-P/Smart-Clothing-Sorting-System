@@ -260,13 +260,14 @@ class Dialog(QDialog,Ui_Dialog):
             pixel_count = cv2.countNonZero(mask)
             results[color_name] = pixel_count
             
-        if results:
-            dominant_color = max(results, key=results.get) 
-            self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
-            print(dominant_color)
-            self.obj.pop(0)  # 删除第一个元素
-        else:
-            dominant_color = None  # 如果没有检测到任何颜色   
+        if self.mbus.coils[0]==1:
+            if results:
+                dominant_color = max(results, key=results.get) 
+                self.obj.append(dominant_color)  # 将检测到的颜色添加到列表中 
+                print(dominant_color)
+                self.obj.pop(0)  # 删除第一个元素
+            else:
+                dominant_color = None  # 如果没有检测到任何颜色   
         if frame is not None:
             img = frame
             show_image =img
