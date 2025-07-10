@@ -312,31 +312,31 @@ class Dialog(QDialog,Ui_Dialog):
   #          pass
            
     @pyqtSlot()
-        def showTime(self):
-            """   
-            Slot documentation goes here.
-            """
-            # TODO: not implemented yet
-      # self.run_time_base=self.run_time_base+1
-      # self.run_time_sec=self.run_time_base*0.1
-      # self.run_time_min=self.run_time_sec//60
-      # self.run_time_hour=self.run_time_min//60
-      # self.run_time_min=self.run_time_min%60
-      # self.run_time_hour=self.run_time_hour%60
-      #self.setWindowTitle(str(round(self.run_time_hour))+":"+str(round(self.run_time_min))+":"+str(round(self.run_time_sec)))
-            self.run_time_base=self.run_time_base+1
-            self.run_time_sec=self.run_time_base
-            self.run_time_min=self.run_time_sec//60
-            self.run_time_hour=self.run_time_min//60
-            self.run_time_min=self.run_time_min%60
-            self.run_time_hour=self.run_time_hour%60
-            #self.run_time_sec=self.run_time_sec+1
-            self.setWindowTitle(str(round(self.run_time_hour*0.1))+":"+str(round(self.run_time_min*0.1))+":"+str(round(self.run_time_sec*0.1, 2)))
-            try:     
-                self.show_btn_output()
-                self.show_btn_input()
-            except:
-                pass
+    def showTime(self):
+        """   
+        Slot documentation goes here.
+        """
+        # TODO: not implemented yet
+        # self.run_time_base=self.run_time_base+1
+        # self.run_time_sec=self.run_time_base*0.1
+        # self.run_time_min=self.run_time_sec//60
+        # self.run_time_hour=self.run_time_min//60
+        # self.run_time_min=self.run_time_min%60
+        # self.run_time_hour=self.run_time_hour%60
+        #self.setWindowTitle(str(round(self.run_time_hour))+":"+str(round(self.run_time_min))+":"+str(round(self.run_time_sec)))
+        self.run_time_base=self.run_time_base+1
+        self.run_time_sec=self.run_time_base
+        self.run_time_min=self.run_time_sec//60
+        self.run_time_hour=self.run_time_min//60
+        self.run_time_min=self.run_time_min%60
+        self.run_time_hour=self.run_time_hour%60
+        #self.run_time_sec=self.run_time_sec+1
+        self.setWindowTitle(str(round(self.run_time_hour*0.1))+":"+str(round(self.run_time_min*0.1))+":"+str(round(self.run_time_sec*0.1, 2)))
+        try:     
+            self.show_btn_output()
+            self.show_btn_input()
+        except:
+            pass
 
     def show_btn_output(self):   
         for i in range(5):            
