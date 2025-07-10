@@ -60,7 +60,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.Ui_init()
         self.Timer_init()
         self.camera_init()
-        self.obj = [0,0,0,0,0,0]
+
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
@@ -220,8 +220,6 @@ class Dialog(QDialog,Ui_Dialog):
                     for box in result.boxes:
                         class_id = int(box.cls)  # 类别ID
                         class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
-                        self.obj.append(class_name)  # 将检测到的目标添加到列表中
-                        self.obj.pop(0)
                         confidence = float(box.conf)  # 置信度（0~1）
                         x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
 
@@ -302,11 +300,11 @@ class Dialog(QDialog,Ui_Dialog):
         }
 
         # 根据线圈状态记录结果
-        if self.mbus.coils[0] == 1:
+        if self.mbus.registers[0] == 1:
             if results:
                 dominant_category = max(results, key=results.get)
-                self.obj.append(dominant_category)  # 添加到列表
-                self.obj.pop(0)  # 删除第一个元素
+                self.mbus.obj.append(dominant_category)  # 添加到列表
+                self.mbus.obj.pop(0)  # 删除第一个元素
                 print(self.obj)
             else:
                 dominant_category = None  # 无分类结果

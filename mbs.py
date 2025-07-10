@@ -24,6 +24,7 @@ class MBUS():
         self.config = []
         self.distance = []
         self.values = [0,0,0,0,0]
+        self.obj = [0,0,0,0,0,0]
         #电机运动参数
 
         self.ADR_IN = 0
@@ -145,6 +146,12 @@ class MBUS():
                 self.ADR_IN,
                 self.NUM_IN
             )
+            if self.registers[1] == 1:
+                if self.obj[1] == 1:
+                    self.values[1] = 62580
+                if self.obj[2] == 2:
+                    self.values[2] = 62580
+                self.func = 1
         except Exception as e:
                 print(f"输入寄存器错误: {e}")
     def beating(self):
