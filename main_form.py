@@ -186,7 +186,7 @@ class Dialog(QDialog,Ui_Dialog):
         for each in self.btn_output:
             each.clicked.connect(lambda: self.out_btn_clicked(self.sender()))
 
-     def init_trigger(self):
+    def init_trigger(self):
         """
         初始化触发器
         """
@@ -201,7 +201,7 @@ class Dialog(QDialog,Ui_Dialog):
         """
         触发检查
         """
-       self.new_trigger = self.in_once()
+        self.new_trigger = self.in_once()
         for i in range(6):
             if self.new_trigger[i]> self.pre_trigger[i]:
                 self.trigger_state[i] = 1
