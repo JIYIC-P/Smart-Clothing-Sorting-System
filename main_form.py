@@ -113,6 +113,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_load.setText(_translate("Dialog", "加载设置"))
         self.btn_add.setText(_translate("Dialog", "添加一行"))
         self.btn_apply.setText(_translate("Dialog", "应用"))
+        self.mode_shift.setText(_translate("Dialog", "模式切换"))
         self.label.setText(_translate("Dialog", "串口选择"))
         self.label_1.setText(_translate("Dialog", "波特率"))
         self.comboBox_1.setItemText(0, _translate("Dialog", "COM1"))
@@ -208,6 +209,14 @@ class Dialog(QDialog,Ui_Dialog):
 
 
 
+    @pyqtSlot()
+    def on_mode_shift_clicked(self):
+        if self.mode == "color":
+            self.mode = "shape"
+            self.mode_shift.setText("形状检测")
+        elif self.mode == "shape":
+            self.mode = "color"
+            self.mode_shift.setText("颜色检测")
     def show_btn_input(self):   
         text = 0     
         for i in range(3):            

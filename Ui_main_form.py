@@ -78,7 +78,11 @@ class Ui_Dialog(object):
         self.btn_apply = QtWidgets.QPushButton(self.tab_3)
         self.btn_apply.setGeometry(QtCore.QRect(850, 290, 91, 41))
         self.btn_apply.setObjectName("btn_apply")
+        self.mode_shift = QtWidgets.QPushButton(self.tab_3)
+        self.mode_shift.setGeometry(QtCore.QRect(850, 420, 91, 41))
+        self.mode_shift.setObjectName("mode_shift")
         self.tabWidget.addTab(self.tab_3, "")
+    
 
         self.retranslateUi(Dialog)
         self.tabWidget.setCurrentIndex(0)
@@ -110,4 +114,5 @@ class Ui_Dialog(object):
         self.btn_load.setText(_translate("Dialog", "加载设置"))
         self.btn_add.setText(_translate("Dialog", "添加一行"))
         self.btn_apply.setText(_translate("Dialog", "应用"))
+        self.mode_shift.setText(_translate("Dialog", "模式切换"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
