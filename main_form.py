@@ -201,8 +201,13 @@ class Dialog(QDialog,Ui_Dialog):
 
         #TODO: 这里需要写各个传感器触发后对应机械臂的行为
         for i in range(self.mbus.ADR_IN):
-            if self.mbus.trig_states[i] == 1:
+            if self.mbus.trig_status[i] == 1:#下降沿
                 pass
+
+
+
+
+
     def show_btn_input(self):   
         text = 0     
         for i in range(3):            

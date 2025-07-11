@@ -36,7 +36,7 @@ class MBUS():
 
         self.pre_reg = [0]*6
         self.cur_reg = [0]*6
-        self.trig_states = [0]*6
+        self.trig_status = [0]*6
         self.coils = [0]*5
         # input寄存器状态和线圈状态
         
@@ -176,9 +176,9 @@ class MBUS():
             )
             for i in range(6):#0 保持 1 下降 2 上升
                 if self.cur_reg[i] - self.pre_reg[i] > 0 :
-                   self.trig_states[i] = 1 
+                   self.trig_status[i] = 1 
                 elif self.cur_reg[i] - self.pre_reg[i] < 0:
-                   self.trig_states[i] = 2
+                   self.trig_status[i] = 2
             self.pre_reg = self.cur_reg
         except Exception as e:
             print(f"输入寄存器错误: {e}")
@@ -249,8 +249,6 @@ class MBUS():
             )
         except Exception as e:
                 print(f"控制失败: {e}")
-                self.func = 1
-                #控制失败不代表电机不转，但是为了保险再次发出控制指令
         
     def read_coils(self):
         try:    
