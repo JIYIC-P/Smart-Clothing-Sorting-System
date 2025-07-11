@@ -198,6 +198,8 @@ class Dialog(QDialog,Ui_Dialog):
         """
         触发检查
         """
+
+        #TODO: 这里需要写各个传感器触发后对应机械臂的行为
         for i in range(self.mbus.ADR_IN):
             if self.mbus.trig_states[i] == 1:
                 pass
