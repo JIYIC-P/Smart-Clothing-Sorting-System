@@ -3,12 +3,14 @@ import modbus_tk.defines as fnc
 from modbus_tk import modbus_rtu as rtu
 import time
 import threading
+from PyQt5.QtCore import QTimer
 
 class MBUS():
     def __init__(self, PORT='COM4', BOARD_RATE=38400, TOUT=1):
         """
         Modbus RTU 通信类初始化
         """
+        self.init_trigger()
         self.PORT = PORT
         self.BOARD_RATE = BOARD_RATE
         self.TOUT = TOUT
@@ -25,7 +27,7 @@ class MBUS():
         self.distance = []
         self.values = [0,0,0,0,0]
         self.l_in = [0,0,0,0,0,0]
-        self.l_out = [0,0,0,0,0]
+        self.l_out = [0,0,0,0,0]        
         #电机运动参数
 
         self.ADR_IN = 0
@@ -44,6 +46,32 @@ class MBUS():
         # 发指令线程
         self.beating_interval = 0.1  
         # 默认心跳间隔
+
+    def init_trigger(self):
+        """
+        初始化触发器
+        """
+        self.pre_trigger = [0,0,0,0,0,0]
+        self.new_trigger = [0,0,0,0,0,0]
+        self.trigger_state = [0,0,0,0,0,0]
+        self.IO_trigger = QTimer()
+        self.IO_trigger.timeout.connect(self.trigger_check)
+        self.IO_trigger.start(100)
+
+    def trigger_check(self):
+        """
+        触发检查
+        """
+       self.new_trigger = self.in_once()
+        for i in range(6):
+            if self.new_trigger[i]> self.pre_trigger[i]:
+                self.trigger_state[i] = 1
+            elif self.new_trigger[i] < self.pre_trigger[i]:
+                self.trigger_state[i] = 2
+            elif self.new_trigger[i] == self.pre_trigger[i]:
+                self.trigger_state[i] = 0
+        
+            self.pre_trigger[i] = self.new_trigger[i]
 
     def open(self):
         """打开Modbus RTU串口连接"""
