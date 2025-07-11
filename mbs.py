@@ -24,9 +24,7 @@ class MBUS():
         self.func = 0  
         self.config = []
         self.distance = []
-        self.values = [0,0,0,0,0]
-        self.l_in = [0,0,0,0,0,0]
-        self.l_out = [0,0,0,0,0]        
+        self.values = [0,0,0,0,0]    
         #电机运动参数
 
         self.ADR_IN = 0
@@ -36,14 +34,16 @@ class MBUS():
         # 受控设备
 
 
-        self.registers = [0]*6
+        self.pre_reg = [0]*6
+        self.cur_reg = [0]*6
+        self.trig_states = [0]*6
         self.coils = [0]*5
         # input寄存器状态和线圈状态
         
 
         self.sender = threading.Thread(target=self.beating)
+        self.beating_interval = 0.1
         # 发指令线程
-        self.beating_interval = 0.1  
         # 默认心跳间隔
 
   # def init_trigger(self):
@@ -168,44 +168,21 @@ class MBUS():
             读取的值存储在self.registers中
         """
         try:
-            self.registers = self.master.execute(
+            self.cur_reg = self.master.execute(
                 1,
                 fnc.READ_INPUT_REGISTERS,
                 self.ADR_IN,
                 self.NUM_IN 
             )
-            self.recognize()
+            for i in range(6):#0 保持 1 下降 2 上升
+                if self.cur_reg[i] - self.pre_reg[i] > 0 :
+                   self.trig_states[i] = 1 
+                elif self.cur_reg[i] - self.pre_reg[i] < 0:
+                   self.trig_states[i] = 2
+            self.pre_reg = self.cur_reg
         except Exception as e:
             print(f"输入寄存器错误: {e}")
-    def recognize(self):
-            print ("re:",self.registers,"\nobj:",self.obj)
-            signal = 0
-            if self.registers[1] == 1:
-                if self.obj[4] == 1:
-                    self.values[0] = 62580
-                    signal = 1
 
-            if self.registers[2] == 1:
-                if self.obj[3] == 2:
-                    self.values[1] = 62580
-                    signal =1
-                else :
-                    self.obj[3] = 0
-            if signal == 1:
-                self.coil_once()
-
-            # if self.registers[3] == 1:
-            #     if self.obj[2] == 1:
-            #         self.values[2] = 62580
-
-            # if self.registers[4] == 1:
-            #     if self.obj[1] == 1:
-            #         self.values[3] = 62580
-
-            # if self.registers[5] == 1:
-            #     if self.obj[0] == 1:
-            #         self.values[4] = 62580
-            #self.func = 1
 
 
     def beating(self):

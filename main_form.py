@@ -190,26 +190,17 @@ class Dialog(QDialog,Ui_Dialog):
         """
         初始化触发器
         """
-        self.pre_trigger = [0,0,0,0,0,0]
-        self.new_trigger = [0,0,0,0,0,0]
-        self.trigger_state = [0,0,0,0,0,0]
-        self.IO_trigger = QTimer()
-        self.IO_trigger.timeout.connect(self.trigger_check)
-        self.IO_trigger.start(100)
+        self.reg_trigger = QTimer()
+        self.reg_trigger.timeout.connect(self.trigger_check)
+        self.reg_trigger.start(100)
 
     def trigger_check(self):
         """
         触发检查
         """
-        self.new_trigger = self.in_once()
-        for i in range(6):
-            if self.new_trigger[i]> self.pre_trigger[i]:
-                self.trigger_state[i] = 1
-            elif self.new_trigger[i] < self.pre_trigger[i]:
-                self.trigger_state[i] = 2
-            elif self.new_trigger[i] == self.pre_trigger[i]:
-                self.trigger_state[i] = 0
-            self.pre_trigger[i] = self.new_trigger[i]
+        for i in range(self.mbus.ADR_IN):
+            if self.mbus.trig_states[i] == 1:
+                pass
     def show_btn_input(self):   
         text = 0     
         for i in range(3):            
