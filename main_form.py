@@ -60,10 +60,10 @@ class Dialog(QDialog,Ui_Dialog):
         self.Ui_init()
         self.Timer_init()
         self.camera_init()
-
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
+        self.init_trigger()
 
 
     def camera_init(self):
@@ -87,6 +87,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.t_YoLo=QTimer()
         self.t_YoLo.timeout.connect(self.show_img)
         self.t_YoLo.start(100)
+          
 
 
     def Ui_init(self):
@@ -185,7 +186,30 @@ class Dialog(QDialog,Ui_Dialog):
         for each in self.btn_output:
             each.clicked.connect(lambda: self.out_btn_clicked(self.sender()))
 
+     def init_trigger(self):
+        """
+        初始化触发器
+        """
+        self.pre_trigger = [0,0,0,0,0,0]
+        self.new_trigger = [0,0,0,0,0,0]
+        self.trigger_state = [0,0,0,0,0,0]
+        self.IO_trigger = QTimer()
+        self.IO_trigger.timeout.connect(self.trigger_check)
+        self.IO_trigger.start(100)
 
+    def trigger_check(self):
+        """
+        触发检查
+        """
+       self.new_trigger = self.in_once()
+        for i in range(6):
+            if self.new_trigger[i]> self.pre_trigger[i]:
+                self.trigger_state[i] = 1
+            elif self.new_trigger[i] < self.pre_trigger[i]:
+                self.trigger_state[i] = 2
+            elif self.new_trigger[i] == self.pre_trigger[i]:
+                self.trigger_state[i] = 0
+            self.pre_trigger[i] = self.new_trigger[i]
     def show_btn_input(self):   
         text = 0     
         for i in range(3):            
