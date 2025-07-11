@@ -37,6 +37,9 @@ class MBUS():
         self.pre_reg = [0]*6
         self.cur_reg = [0]*6
         self.trig_status = [0]*6
+        self.count_trig_u = [0]*6
+        self.count_trig_d = [0]*6
+        self.cloth = []
         self.coils = [0]*5
         # input寄存器状态和线圈状态
         
@@ -176,9 +179,11 @@ class MBUS():
             )
             for i in range(6):#0 保持 1 下降 2 上升
                 if self.cur_reg[i] - self.pre_reg[i] > 0 :
-                   self.trig_status[i] = 1 
+                   self.trig_status[i] = 1
+                   self.count_trig_d[i] += 1 #down计数
                 elif self.cur_reg[i] - self.pre_reg[i] < 0:
                    self.trig_status[i] = 2
+                   self.count_trig_u[i] += 1 #up计数
             self.pre_reg = self.cur_reg
         except Exception as e:
             print(f"输入寄存器错误: {e}")
@@ -217,6 +222,8 @@ class MBUS():
             self.values = values
             self.func = func
 
+
+
     def coil_once(self):
         """
         控制多个线圈
@@ -250,6 +257,8 @@ class MBUS():
         except Exception as e:
                 print(f"控制失败: {e}")
         
+
+
     def read_coils(self):
         try:    
             self.coils = list(self.master.execute(
@@ -260,6 +269,9 @@ class MBUS():
             )
         except Exception as e:
                 print(f"读取失败: {e}")
+
+
+
     def set_salarate(self,id,value):
         int_value = int(value) 
         # 2. 拆分高低16位

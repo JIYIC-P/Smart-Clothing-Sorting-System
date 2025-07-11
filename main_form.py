@@ -64,6 +64,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_output()
         self.show_btn_input()
         self.init_trigger()
+        self.detar = [0,0,0,0,0]
 
 
     def camera_init(self):
@@ -200,15 +201,20 @@ class Dialog(QDialog,Ui_Dialog):
         触发检查
         """
 
-        #TODO: 这里需要写各个传感器触发后对应机械臂的行为
-        for i in range(self.mbus.ADR_IN):
-            if self.mbus.trig_status[i] == 1:#下降沿
-                pass
+        #TODO: 这里需要写各个传感器触发后对应机械臂的行为，入队在show_img()函数中判断下降沿=》如果能改成在这里入队会更好
 
+        if self.mbus.trig_status[0] == 1:#下降沿
+            self.mbus.cloth.append()
+            self.detar[0] += 1
 
+        for i in range(4):# i+1 ：【1，4】
+            if self.mbus.trig_status[i+1] == 1:#下降沿
+                self.detar[i+1] += self.mbus.count_trig_d[i+1]-self.mbus.count_trig_u[5]
+            elif self.mbus.trig_status[i+1] == 2:#上升沿似乎无变化
+                pass                
 
-
-
+        if self.mbus.trig_status[5] == 2:#最后一个传感器上升沿出队
+            self.mbus.cloth.pop(0)
     @pyqtSlot()
     def on_mode_shift_clicked(self):
         if self.mode == "color":
@@ -317,12 +323,11 @@ class Dialog(QDialog,Ui_Dialog):
             self.label_2.setPixmap(pixmap)
 
     def control(self,results):
-        # 根据线圈状态记录结果
-        if self.mbus.registers[0] == 1:
+        # 0号传感器下降沿触发
+        if self.mbus.trig_status[0] == 1:
             if results:
                 dominant_category = max(results, key=results.get)
-                self.mbus.l_in.append(dominant_category)  # 添加到列表
-                self.mbus.l_out.pop(0)  # 删除第一个元素
+                self.mbus.cloth.append(dominant_category)  # 添加到列表
                 QTimer.singleShot(2500)
                 print(self.mbus.obj)
             else:
