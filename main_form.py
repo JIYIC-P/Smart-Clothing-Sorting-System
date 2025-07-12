@@ -61,7 +61,7 @@ class Dialog(QDialog,Ui_Dialog):
     def __init__(self, parent=None):
         
         super(Dialog, self).__init__(parent)
-        self.mode = "color"
+        self.mode = None
         self.mbus = mbs.MBUS()
         self.camera = True
         self.Ui_init()
@@ -71,8 +71,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_output()
         self.show_btn_input()
         self.init_trigger()
-        self.detar = [0,0,0,0,0]
-
+      
 
 
     def camera_init(self):
@@ -81,8 +80,7 @@ class Dialog(QDialog,Ui_Dialog):
             self.streamer = ThreadedCamera(stream_link)
             self.streamer.open_cam()
             self.streamer.source=0
-            if self.mode == "shape":
-                self.model = YOLO("yolov8n.pt")
+
 
     def Timer_init(self):
         #加入小时，分钟，和一个base作为基准
@@ -102,19 +100,17 @@ class Dialog(QDialog,Ui_Dialog):
         
           
     def back(self):
-        # if self.btn_output.
-        t = time.time()
-        signal = 0
-        for i in range(5):
-            if self.mbus.coils[i] == 1:
-                if t - self.mbus.t1[i] > 0.7:
-                    signal = 1
-                    self.mbus.values[i] = 0
-                    self.btn_output[i].setAccessibleDescription("0")
-
-
-        if signal == 1:
-            self.mbus.func = 1
+        if self.mode is not None:
+            t = time.time()
+            signal = 0
+            for i in range(5):
+                if self.mbus.coils[i] == 1:
+                    if t - self.mbus.t1[i] > 0.7:
+                        signal = 1
+                        self.mbus.values[i] = 0
+                        self.btn_output[i].setAccessibleDescription("0")
+            if signal == 1:
+                self.mbus.func = 1
 
 
     def Ui_init(self):
@@ -184,7 +180,6 @@ class Dialog(QDialog,Ui_Dialog):
         self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
         self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
-    
     def init_sys_tble(self):
         grid = QGridLayout(self.tabWidget)
         grid.addLayout(grid, 0, 0)  # 将主水平布局放入网格
@@ -375,7 +370,6 @@ class Dialog(QDialog,Ui_Dialog):
                         self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
                         
 
-
         if self.mbus.trig_status[5] == 1:
             if len(self.mbus.cloth)>0 :
                 if self.mbus.cloth[0] < 0 : #TODO:==推杆推动的条件 
@@ -400,7 +394,6 @@ class Dialog(QDialog,Ui_Dialog):
 
 
 
-
     @pyqtSlot()
     def  out_btn_clicked(self, btn):
         if not self.mbus.isopend:
@@ -416,35 +409,29 @@ class Dialog(QDialog,Ui_Dialog):
 
     @pyqtSlot()
     def  out_btn_start_clicked(self):
-        pass
+        #开始运行识别
+        self.mode = self.comboBox_mode.currentText()
+        if self.mode == "形状":
+            self.model = YOLO("yolov8n.pt")
+
 
 
 
     @pyqtSlot()
     def  out_btn_reset_clicked(self):
-        self.detar = [0,0,0,0,0]
-        self.mbus.func = 0  
-        self.mbus.config = []
-        self.mbus.distance = []
-        self.mbus.values = [0,0,0,0,0]    
-        self.mbus.t1 = [time.time() for _ in range(5)]
-        #电机运动参数
-        self.mbus.count_trig_u = [0]*6
-        self.mbus.cloth = []
-
-
-        
+        pass
 
  
 
     @pyqtSlot()
     def show_img(self):
-        if self.camera:
-            frame = self.streamer.grab_frame()
-            if self.mode == "shape":
-                self.match_shape(frame)
-            elif self.mode == "color":
-                self.match_color(frame)
+        if self.mode is not None:
+            if self.camera:
+                frame = self.streamer.grab_frame()
+                if self.mode == "形状":
+                    self.match_shape(frame)
+                elif self.mode == "颜色":
+                    self.match_color(frame)
 
 
 
