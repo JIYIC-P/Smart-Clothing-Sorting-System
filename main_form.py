@@ -72,7 +72,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_input()
         self.init_trigger()
         self.detar = [0,0,0,0,0]
-        self.count = 0
+
 
 
     def camera_init(self):
@@ -184,6 +184,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
         self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
+    
     def init_sys_tble(self):
         grid = QGridLayout(self.tabWidget)
         grid.addLayout(grid, 0, 0)  # 将主水平布局放入网格
@@ -421,9 +422,20 @@ class Dialog(QDialog,Ui_Dialog):
 
     @pyqtSlot()
     def  out_btn_reset_clicked(self):
-        pass
+        self.detar = [0,0,0,0,0]
+        self.mbus.func = 0  
+        self.mbus.config = []
+        self.mbus.distance = []
+        self.mbus.values = [0,0,0,0,0]    
+        self.mbus.t1 = [time.time() for _ in range(5)]
+        #电机运动参数
+        self.mbus.count_trig_u = [0]*6
+        self.mbus.cloth = []
 
 
+        
+
+ 
 
     @pyqtSlot()
     def show_img(self):
