@@ -82,12 +82,13 @@ class Dialog(QDialog,Ui_Dialog):
 
     def Timer_init(self):
         #加入小时，分钟，和一个base作为基准
-        self.run_time_base=0
-        self.run_tinme_hour=0
-        self.run_time_min=0
-        self.run_time_sec=0
+        self.base = 0
+
+        self.hour=0
+        self.min=0
+        self.sec=0
         self.timer=QTimer()
-        self.timer.timeout.connect(self.showTime)
+        self.timer.timeout.connect(self.show_time)
         self.timer.start(100)
         self.t_YoLo=QTimer()
         self.t_YoLo.timeout.connect(self.show_img)
@@ -540,20 +541,24 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def showTime(self):
-        """   
-        Slot documentation goes here.
-        """
-        #self.setWindowTitle(str(round(self.run_time_hour))+":"+str(round(self.run_time_min))+":"+str(round(self.run_time_sec)))
-        self.run_time_base=self.run_time_base+1
-        self.run_time_sec=self.run_time_base
-        self.run_time_min=self.run_time_sec//60
-        self.run_time_hour=self.run_time_min//60
-        self.run_time_min=self.run_time_min%60
-        self.run_time_hour=self.run_time_hour%60
-        self.run_time_sec=self.run_time_sec%60
-        #self.run_time_sec=self.run_time_sec+1
-        self.setWindowTitle(str(round(self.run_time_hour*0.1))+":"+str(round(self.run_time_min*0.1))+":"+str(round(self.run_time_sec*0.1, 2)))
+    def show_time(self):
+        """更新并显示时间的槽函数"""
+        # 更新时间
+        self.base += 1
+        if self.base >= 10:  # 改为 >= 更安全
+            self.sec += self.base // 10  # 处理base超过10的情况
+            self.base %= 10
+        
+        if self.sec >= 60:  # 改为 >= 更安全
+            self.min += self.sec // 60
+            self.sec %= 60
+        
+        if self.min >= 60:  # 改为 >= 更安全
+            self.hour += self.min // 60
+            self.min %= 60
+        
+        # 使用f-string格式化字符串更简洁高效
+        self.setWindowTitle(f"{self.hour:02d}:{self.min:02d}:{self.sec:02d}:{self.base:01d}")
         try:     
             self.show_btn_output()
             self.show_btn_input()
