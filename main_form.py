@@ -63,7 +63,6 @@ class Dialog(QDialog,Ui_Dialog):
         super(Dialog, self).__init__(parent)
         self.mode = None
         self.mbus = mbs.MBUS()
-        self.camera = True
         self.Ui_init()
         self.Timer_init()
         self.camera_init()
@@ -75,11 +74,10 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     def camera_init(self):
-        if (self.camera):
-            stream_link = "rtsp://192.168.1.100/user=admin&password=&channel=1&stream=0.sdp?"
-            self.streamer = ThreadedCamera(stream_link)
-            self.streamer.open_cam()
-            self.streamer.source=0
+        stream_link = "rtsp://192.168.1.100/user=admin&password=&channel=1&stream=0.sdp?"
+        self.streamer = ThreadedCamera(stream_link)
+        self.streamer.open_cam()
+        self.streamer.source=0
 
 
     def Timer_init(self):
@@ -419,9 +417,10 @@ class Dialog(QDialog,Ui_Dialog):
 
     @pyqtSlot()
     def  out_btn_reset_clicked(self):
+        self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
-        self.mbus.distance = []
+        self.mbus.coils = [0]*5
         self.mbus.values = [0,0,0,0,0]    
         self.mbus.t1 = [time.time() for _ in range(5)]
         #电机运动参数
@@ -432,12 +431,12 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def show_img(self):
         if self.mode is not None:
-            if self.camera:
-                frame = self.streamer.grab_frame()
-                if self.mode == "形状":
-                    self.match_shape(frame)
-                elif self.mode == "颜色":
-                    self.match_color(frame)
+
+            frame = self.streamer.grab_frame()
+            if self.mode == "形状":
+                self.match_shape(frame)
+            elif self.mode == "颜色":
+                self.match_color(frame)
 
 
 
@@ -645,8 +644,7 @@ class Dialog(QDialog,Ui_Dialog):
             QMessageBox.No)
         
         if reply == QMessageBox.Yes:
-            if self.camera:
-                self.streamer.close_cam()
+            self.streamer.close_cam()
             self.mbus.end = True
             event.accept()
             time.sleep(0.1)
