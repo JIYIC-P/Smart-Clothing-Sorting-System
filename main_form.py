@@ -419,9 +419,15 @@ class Dialog(QDialog,Ui_Dialog):
 
     @pyqtSlot()
     def  out_btn_reset_clicked(self):
-        pass
-
- 
+        self.mbus.func = 0  
+        self.mbus.config = []
+        self.mbus.distance = []
+        self.mbus.values = [0,0,0,0,0]    
+        self.mbus.t1 = [time.time() for _ in range(5)]
+        #电机运动参数
+        self.mbus.count_trig_u = [0]*6
+        self.mbus.cloth = []
+        # input寄存器状态和线圈状态
 
     @pyqtSlot()
     def show_img(self):
