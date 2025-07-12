@@ -20,8 +20,10 @@ from PyQt5.QtCore import (
     pyqtSlot,
     QCoreApplication,
     QTimer,
-    QObject
+    QObject,
+    QSize
 )
+from PyQt5.QtCore import QSize
 # Qt GUI模块
 from PyQt5.QtGui import (
     QImage,
@@ -41,7 +43,12 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QComboBox,
     QWidget,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QSizePolicy,
+    QHBoxLayout,  # <-- Add this line
+    QVBoxLayout,
+    QGridLayout
+    
 )
 
 # 本地应用/库特定导入 (Local application)
@@ -65,6 +72,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_input()
         self.init_trigger()
         self.detar = [0,0,0,0,0]
+        self.count = 0
 
 
     def camera_init(self):
@@ -88,7 +96,25 @@ class Dialog(QDialog,Ui_Dialog):
         self.t_YoLo=QTimer()
         self.t_YoLo.timeout.connect(self.show_img)
         self.t_YoLo.start(100)
+        self.t_back=QTimer()
+        self.t_back.timeout.connect(self.back)
+        self.t_back.start(100)
+        
           
+    def back(self):
+        # if self.btn_output.
+        t = time.time()
+        signal = 0
+        for i in range(5):
+            if self.mbus.coils[i] == 1:
+                if t - self.mbus.t1[i] > 0.7:
+                    signal = 1
+                    self.mbus.values[i] = 0
+                    self.btn_output[i].setAccessibleDescription("0")
+
+
+        if signal == 1:
+            self.mbus.func = 1
 
 
     def Ui_init(self):
@@ -100,12 +126,28 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
-
+        self.update_all_fonts()
+        # 在 Ui_init 或 setupUi 后添加
+        self.label_2.setAlignment(Qt.AlignCenter)
+    def resizeEvent(self, event):
+        self.update_all_fonts()
+        super().resizeEvent(event)
+    def update_all_fonts(self):
+        """根据窗口大小动态调整所有控件字体大小"""
+        # 以1920x1080为基准，20为基准字号
+        scale_factor = min(self.width() / 1440, self.height() / 900)
+        font_size = max(12, int(20 * scale_factor * 1.2))  # 最小12
+        font = QFont('微软雅黑', font_size)
+        font.setBold(True)
+        self.setFont(font)
+        # 只想让表格内容和表头都变大，可以单独设置
+        self.tableWidget.setFont(font)
+        self.tableWidget.horizontalHeader().setFont(font)
     def retranslateUi(self, Dialog):
         _translate = QCoreApplication.translate
         self.groupBox_output.setTitle(_translate("Dialog", "motor"))
         self.groupBox_input.setTitle(_translate("Dialog", "input"))
-
+        #self.label_7.setText(_translate("Dialog","波特率    "))
         Dialog.setWindowTitle(_translate("Dialog", "MODBUS协议测试"))
         self.pushButton.setText(_translate("Dialog", "连接"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Dialog", "YoLo检测"))
@@ -114,7 +156,9 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_load.setText(_translate("Dialog", "加载设置"))
         self.btn_add.setText(_translate("Dialog", "添加一行"))
         self.btn_apply.setText(_translate("Dialog", "应用"))
-        self.mode_shift.setText(_translate("Dialog", "模式切换"))
+        #self.btn_load.
+
+#       self.mode_shift.setText(_translate("Dialog", "模式切换"))
         self.label.setText(_translate("Dialog", "串口选择"))
         self.label_1.setText(_translate("Dialog", "波特率"))
         self.comboBox_1.setItemText(0, _translate("Dialog", "COM1"))
@@ -131,8 +175,12 @@ class Dialog(QDialog,Ui_Dialog):
         self.comboBox_2.setItemText(2, _translate("Dialog", "115200"))
 
     def init_sys_tble(self):
-        # 设置表头字体样式
-        font = QFont('微软雅黑', 20)
+        grid = QGridLayout(self.tabWidget)
+        grid.addLayout(grid, 0, 0)  # 将主水平布局放入网格
+        # 设置表头字体样
+        font = QFont('微软雅黑', 10)
+        font.setPointSize(40)  # 设置字体大小
+        font.setFamily('微软雅黑')  # 设置字体
         font.setBold(True)
         
         # 设置水平表头样式
@@ -151,9 +199,9 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.setRowCount(0)
         
         # 设置列宽
-        self.tableWidget.setColumnWidth(0, 120)    # 参数名
-        self.tableWidget.setColumnWidth(1, 160)   # 参数值
-        self.tableWidget.setColumnWidth(2, 450)   # 备注
+        self.tableWidget.setColumnWidth(0, 100)    # 参数名
+        self.tableWidget.setColumnWidth(1, 250)    # 参数值
+        self.tableWidget.setColumnWidth(2, 700)    # 备注
         
         # 禁用排序
         self.tableWidget.setSortingEnabled(False)
@@ -163,31 +211,122 @@ class Dialog(QDialog,Ui_Dialog):
         for col, text in enumerate(headers):
             item = QTableWidgetItem(text)
             item.setTextAlignment(Qt.AlignCenter)  # 文字居中
+            item.setSizeHint(QSize(80,80) )
             self.tableWidget.setHorizontalHeaderItem(col, item)
         
         self.on_btn_load_clicked()
 
     def btn_input_init(self):
+        # 1. 创建主水平布局（用于放置4组垂直布局）
+        main_hbox = QHBoxLayout()
+        main_hbox.setSpacing(100)  # 设置列间距为10像素
         index = 1
-        for i in range(4):
-            for j in range(2):
-                btn = QPushButton('input'+str(index), self.groupBox_input)
-                btn.setGeometry(70 + i * 110, 30 + j*50, 90, 50)
+        for col in range(3):  # 共4列
+            # 2. 为每一列创建垂直布局
+            vbox = QVBoxLayout()
+            vbox.setSpacing(100)  # 设置按钮之间的间距为10像素
+            # 3. 每列添加2个按钮
+            for row in range(2):
+                btn = QPushButton('input' + str(index), self.groupBox_input)
                 self.btn_input.append(btn)
-                index += 1
+                font = QFont('微软雅黑', 50)
+                font.setPointSize(55)  # 设置字体大小
+                btn.setFont(font)
+                # 设置按钮的大小策略
+                btn.setSizePolicy(
+                    QSizePolicy.Expanding,  # 水平扩展
+                    QSizePolicy.Expanding   # 垂直扩展
+                )
+                # 固定高度和最小宽度
+                btn.setFixedHeight(40)      # 固定高度40px
+                btn.setMinimumWidth(80)     # 最小宽度80px
+            
+                # 设置按钮样式（可选）
+                btn.setStyleSheet("""
+                    QPushButton {
+                       margin: 2px;         /* 按钮内边距 */
+                      padding: 10px;        /* 文字内边距 */
+                     font-size: 35px;
+                  }
+                """)
+                # 设置按钮的最大高度和最小尺寸
+                btn.setMaximumHeight(120)  # 设置最大高度为40px
+                btn.setMinimumSize(80, 30)  # 最小宽度80px，高度30px
 
+                vbox.addWidget(btn)
+                index += 1
+            
+            # 4. 将垂直布局添加到主水平布局
+            main_hbox.addLayout(vbox)
+            main_hbox.setSpacing(10)  # 列间距
+
+        # 5. 创建栅格布局作为容器
+        grid = QGridLayout(self.groupBox_input)
+        grid.addLayout(main_hbox, 0, 0)  # 将主水平布局放入网格
+        
+        # 6. 设置拉伸比例
+        grid.setRowStretch(0, 1)
+        grid.setColumnStretch(0, 1)
+        
+        # 7. 调整边距和间距
+        grid.setContentsMargins(5, 5, 5, 5)  # 外边框
+        main_hbox.setContentsMargins(0, 0, 0, 0)  # 列组内边距
+        
+         # 8. 应用布局
+        self.groupBox_input.setLayout(grid)
     def btn_motor_init(self):
+        # 1. 创建水平布局 hbox 并添加按钮
+        hbox = QHBoxLayout()
+        hbox.setSpacing(300)  # 按钮之间的固定间距（可根据需要调整）
+        hbox.setContentsMargins(400, 0, 400, 0)  # 左右边距40px（保持两侧对称）
         index = 1
         for i in range(5):
             btn = QPushButton('motor'+str(index), self.groupBox_output)
-            btn.setGeometry(10 + i * 110, 50, 90, 50)
+            font = QFont('微软雅黑', 50)
+            font.setPointSize(55)  # 设置字体大小
+            btn.setFont(font)
             btn.setAccessibleDescription("0")
             btn.setAccessibleName(str(index))
             self.btn_output.append(btn)
-            index += 1 
+            
+            # 设置按钮的大小策略（水平+垂直均扩展）
+            btn.setSizePolicy(
+                QSizePolicy.Expanding,  # 水平策略：尽量扩展
+                QSizePolicy.Maximum    # 垂直策略：不超过最大高度
+            )
+
+            # 设置按钮的最大高度和最小尺寸
+            #btn.setFixedHeight(80)      # 固定高度80px
+            btn.setMaximumHeight(150)  # 设置最大高度为80px
+            #btn.setMaximumWidth(200)  # 设置最小高度为40px
+            btn.setMinimumSize(80, 30)  # 最小宽度80px，高度30px
+            
+            # 可选：设置最小大小（避免按钮过小）
+            # btn.setMinimumSize(60, 30)  # 最小宽度60px，高度30px
+            
+            hbox.addWidget(btn)
+            index += 1
+
+        # 2. 创建栅格布局 grid，并让 hbox 占据整个空间
+        grid = QGridLayout(self.groupBox_output)  # 直接关联到 groupBox_output
+        grid.addLayout(hbox, 0, 0)  # hbox 添加到 grid 的第0行第0列
+
+        # 3. 关键：设置行和列的拉伸比例，让 hbox 充满整个 groupBox_output
+        grid.setRowStretch(0, 1)    # 第0行拉伸
+        grid.setColumnStretch(0, 1)  # 第0列拉伸
+
+        # 4. 可选：去掉布局边距和间距，确保完全填满
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.setSpacing(5)  # 按钮之间的间距
+
+        # 5. 设置 groupBox_output 的布局为 grid
+        self.groupBox_output.setLayout(grid)
+        
+        # 连接按钮点击信号
         for each in self.btn_output:
             each.clicked.connect(lambda: self.out_btn_clicked(self.sender()))
-
     def init_trigger(self):
         """
         初始化触发器
@@ -200,21 +339,63 @@ class Dialog(QDialog,Ui_Dialog):
         """
         触发检查
         """
+        for i in range(1,5):
+            if self.mbus.trig_status[i] == 1: #trig_down
+                t = self.mbus.count_trig_u[i]-self.mbus.count_trig_u[5]
+                print("trig :",self.mbus.trig_status)
+                print(f"tu[{i}]:",self.mbus.count_trig_u[i],"tu[5]",self.mbus.count_trig_u[5],"\ni:",i)
 
+                if len(self.mbus.cloth)>0 :
+                    if self.mbus.cloth[t] == i : #TODO:==推杆推动的条件 
+                        self.mbus.values[i-1] = 62580
+                        btn = self.btn_output[i-1]
+                        if  btn.accessibleDescription()=='0':
+                            btn.setAccessibleDescription("1")
+                        self.mbus.func = 1
+                        print("cloth before pop:",self.mbus.cloth)
+                        self.mbus.cloth.pop(t)
+                        print("cloth after  pop:",self.mbus.cloth)
+                        time.sleep(0.2)
+                        self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
+                        
+
+        if self.mbus.trig_status[5] == 1:
+            if len(self.mbus.cloth)>0 :
+                if self.mbus.cloth[0] < 0 : #TODO:==推杆推动的条件 
+                    self.mbus.values[4] = 62580
+                    self.mbus.func = 1
+                    self.mbus.cloth.pop(0)
+                    self.mbus.count_trig_u[5] += 1
+        elif self.mbus.trig_status[5] == 2: #trig_up
+            self.mbus.cloth.pop(0)
+
+            
+
+                
         #TODO: 这里需要写各个传感器触发后对应机械臂的行为，入队在show_img()函数中判断下降沿=》如果能改成在这里入队会更好
 
-        if self.mbus.trig_status[0] == 1:#下降沿
-            self.mbus.cloth.append()
-            self.detar[0] += 1
+        # if self.mbus.trig_status[0] == 1:#下降沿
+        #     print("拍照")
 
-        for i in range(4):# i+1 ：【1，4】
-            if self.mbus.trig_status[i+1] == 1:#下降沿
-                self.detar[i+1] += self.mbus.count_trig_d[i+1]-self.mbus.count_trig_u[5]
-            elif self.mbus.trig_status[i+1] == 2:#上升沿似乎无变化
-                pass                
-
-        if self.mbus.trig_status[5] == 2:#最后一个传感器上升沿出队
-            self.mbus.cloth.pop(0)
+        # for i in range(4):# i+1 ：【1，4】
+        #     if self.mbus.trig_status[i+1] == 1:#下降沿
+        #         self.detar[i+1] += self.mbus.count_trig_d[i+1]-self.mbus.count_trig_u[5]
+        #         if len(self.mbus.cloth) > 0:
+        #             print("cloth : ",self.mbus.cloth)
+        #             if self.mbus.cloth[len(self.mbus.cloth)-self.detar[i+1]] == i:
+        #                 self.mbus.values[i] = 65525
+        #                 self.mbus.func = 1
+                        
+        #                 self.mbus.cloth.pop(len(self.mbus.cloth)-self.detar[i+1])
+        #                 for i in range(5):
+        #                     self.mbus.count_trig_d[i] -=1
+        #     elif self.mbus.trig_status[i+1] == 2:#上升沿似乎无变化
+        #         pass
+        # print("detar : ",self.detar)
+        # if self.mbus.trig_status[5] == 2:#最后一个传感器上升沿出队
+        #     if (self.mbus.cloth)>0:
+        #         self.mbus.cloth.pop(0)
+        #     self.count -= 1
     @pyqtSlot()
     def on_mode_shift_clicked(self):
         if self.mode == "color":
@@ -223,11 +404,12 @@ class Dialog(QDialog,Ui_Dialog):
         elif self.mode == "shape":
             self.mode = "color"
             self.mode_shift.setText("颜色检测")
+
     def show_btn_input(self):   
         text = 0     
         for i in range(3):            
             for j in range(2):
-                if  self.mbus.registers[text] == 0:
+                if  self.mbus.cur_reg[text] == 0:
                     self.btn_input[text].setStyleSheet("background-color:green")
                 else:
                     self.btn_input[text].setStyleSheet("background-color:red")
@@ -240,14 +422,9 @@ class Dialog(QDialog,Ui_Dialog):
         else:
             No = int(btn.accessibleName())-1
             if  btn.accessibleDescription()=='0':
-                values = [62580]
+                self.mbus.values[No] = 62580
                 btn.setAccessibleDescription("1")
-                self.mbus.coils[No] = 1
-            else :
-                values = [0]
-                btn.setAccessibleDescription("0")
-                self.mbus.coils[No] = 0
-            self.mbus.set_coil(No,1,values,1)
+            self.mbus.func = 1
 
 
     @pyqtSlot()
@@ -288,7 +465,21 @@ class Dialog(QDialog,Ui_Dialog):
         if frame is None:
             time.sleep(0.1)
             return
-        
+                # 显示原始彩色图像（新增部分）
+        height, width = frame.shape[:2]
+        bytes_per_line = 3 * width
+        qimg_original = QImage(
+            frame.data, 
+            width, 
+            height, 
+            bytes_per_line, 
+            QImage.Format_RGB888
+        ).rgbSwapped()
+        pixmap = QPixmap.fromImage(qimg_original).scaledToWidth(max(480, width))
+        self.label_2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.label_2.setMinimumSize(800, 660)  # 可根据需要设置更大
+        self.label_2.setPixmap(pixmap)   # 显示原始图像
+
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         s = hsv[:, :, 1]  # 饱和度通道
         v = hsv[:, :, 2]  # 明度通道
@@ -305,31 +496,30 @@ class Dialog(QDialog,Ui_Dialog):
         }
         self.control(results)
         # 显示图像（可选：用颜色标记分类结果）
-        if frame is not None:
-            classified = np.zeros_like(frame)
-            classified[white_mask] = [255, 255, 255]  # 白色
-            classified[light_mask] = [200, 200, 200]  # 浅色（灰色）
-            classified[dark_mask] = [50, 50, 50]      # 深色（深灰）
-            # 转换为QImage并显示
-            height, width = classified.shape[:2]
-            qimage = QImage(
-                classified.data, 
-                width, 
-                height, 
-                width * 3, 
-                QImage.Format_RGB888
-            )
-            pixmap = QPixmap.fromImage(qimage).scaledToWidth(480)
-            self.label_2.setPixmap(pixmap)
-
+        #if frame is not None:
+        #    classified = np.zeros_like(frame)
+        #    classified[white_mask] = [255, 255, 255]  # 白色
+        #    classified[light_mask] = [200, 200, 200]  # 浅色（灰色）
+        #    classified[dark_mask] = [50, 50, 50]      # 深色（深灰）
+        #    # 转换为QImage并显示
+            #height, width = classified.shape[:2]
+            #qimage = QImage(
+            #    classified.data, 
+            #    width, 
+            #    height, 
+            #    width * 3, 
+            #    QImage.Format_RGB888
+            #)
+            #pixmap = QPixmap.fromImage(qimage).scaledToWidth(480)
+            #self.label_2.setPixmap(pixmap)
+#
     def control(self,results):
         # 0号传感器下降沿触发
         if self.mbus.trig_status[0] == 1:
             if results:
+                
                 dominant_category = max(results, key=results.get)
                 self.mbus.cloth.append(dominant_category)  # 添加到列表
-                QTimer.singleShot(2500)
-                print(self.mbus.obj)
             else:
                 dominant_category = None  # 无分类结果
 
@@ -352,13 +542,6 @@ class Dialog(QDialog,Ui_Dialog):
         """   
         Slot documentation goes here.
         """
-        # TODO: not implemented yet
-        # self.run_time_base=self.run_time_base+1
-        # self.run_time_sec=self.run_time_base*0.1
-        # self.run_time_min=self.run_time_sec//60
-        # self.run_time_hour=self.run_time_min//60
-        # self.run_time_min=self.run_time_min%60
-        # self.run_time_hour=self.run_time_hour%60
         #self.setWindowTitle(str(round(self.run_time_hour))+":"+str(round(self.run_time_min))+":"+str(round(self.run_time_sec)))
         self.run_time_base=self.run_time_base+1
         self.run_time_sec=self.run_time_base
@@ -366,6 +549,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.run_time_hour=self.run_time_min//60
         self.run_time_min=self.run_time_min%60
         self.run_time_hour=self.run_time_hour%60
+        self.run_time_sec=self.run_time_sec%60
         #self.run_time_sec=self.run_time_sec+1
         self.setWindowTitle(str(round(self.run_time_hour*0.1))+":"+str(round(self.run_time_min*0.1))+":"+str(round(self.run_time_sec*0.1, 2)))
         try:     
@@ -417,7 +601,7 @@ class Dialog(QDialog,Ui_Dialog):
                 self.mbus.PORT = self.comboBox_1.currentText()
                 self.mbus.BOARD_RATE = int(self.comboBox_2.currentText())
                 self.mbus.open()
-
+                # print(self.mbus.isopend)
                 if self.mbus.isopend:
                     self.pushButton.setText("断开")
                     self.update_led(Qt.green)  # 绿色表示已连接                    
@@ -426,11 +610,10 @@ class Dialog(QDialog,Ui_Dialog):
             except Exception as e:
                 QMessageBox.critical(self, "异常", f"连接错误: {str(e)}")
         else:
-
-            time.sleep(0.1)
-            self.mbus.close()
-            self.pushButton.setText("连接")
-            self.update_led(Qt.red)  # 红色表示未连接
+            if  self.mbus.isopend:
+                self.mbus.close()
+                self.pushButton.setText("连接")
+                self.update_led(Qt.red)  # 红色表示未连接
 
     @pyqtSlot()
     def serial_close(self):
@@ -529,6 +712,19 @@ class Dialog(QDialog,Ui_Dialog):
             print("设置电机：")
             self.mbus.func = 2
 
+    # @pyqtSlot()
+    # def on_btn_load_2_clicked(self):
+    #     print("back to zero")
+    #     self.mbus1 = mbs.MBUS(PORT='COM3')
+    #     self.mbus1.open()
+    #     if self.mbus1.isopend:
+    #         time.sleep(0.1)
+    #         self.mbus1.PORT = self.comboBox_1.currentText()
+    #         self.mbus1.BOARD_RATE = int(self.comboBox_2.currentText())
+    #         self.mbus1.back()
+    #         time.sleep(0.1)
+    #     self.mbus1.close()
+
     def insert_sys_cfg_line(self, cfg_name, cfg_dat, cfg_beizhu):
         print("插入行:", cfg_name, cfg_dat, cfg_beizhu)
         row = self.tableWidget.rowCount()
@@ -545,6 +741,7 @@ def main():
     app = QApplication(sys.argv)
     window = Dialog()  
     window.show()
+    window.showMaximized()
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

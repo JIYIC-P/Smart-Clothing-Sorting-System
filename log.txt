@@ -1,0 +1,266 @@
+打开端口: True, COM3, 38400, 1
+count: [1, 0, 0, 0, 0, 0]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 0 tu[5] 0 
+i: 1
+count: [1, 1, 0, 0, 0, 0]
+count: [2, 1, 0, 0, 0, 0]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 0 tu[5] 0 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [2, 1, 1, 0, 0, 1]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 1 tu[5] 1 
+i: 1
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 1 tu[5] 1 
+i: 1
+count: [2, 2, 1, 0, 0, 1]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 1 tu[5] 1 
+i: 2
+cloth before pop: [2]
+cloth after  pop: []
+count: [2, 2, 2, 0, 0, 1]
+count: [3, 2, 2, 0, 0, 2]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 2 tu[5] 2 
+i: 1
+count: [3, 3, 2, 0, 0, 2]
+count: [4, 3, 2, 0, 0, 2]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 2 tu[5] 2 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [4, 3, 3, 0, 0, 3]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 3 tu[5] 3 
+i: 1
+count: [4, 4, 3, 0, 0, 3]
+count: [5, 4, 3, 0, 0, 3]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 3 tu[5] 3 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [5, 4, 4, 0, 0, 4]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 4 tu[5] 4 
+i: 1
+count: [5, 5, 4, 0, 0, 4]
+count: [6, 5, 4, 0, 0, 4]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 4 tu[5] 4 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [6, 5, 5, 0, 0, 4]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 5 tu[5] 5 
+i: 1
+count: [6, 6, 5, 0, 0, 5]
+count: [7, 6, 5, 0, 0, 5]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 5 tu[5] 5 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [7, 6, 6, 0, 0, 6]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 6 tu[5] 6 
+i: 1
+count: [7, 7, 6, 0, 0, 6]
+count: [8, 7, 6, 0, 0, 6]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 6 tu[5] 6 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [8, 7, 7, 0, 0, 6]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 7 tu[5] 7 
+i: 1
+count: [8, 8, 7, 0, 0, 7]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 7 tu[5] 7 
+i: 2
+cloth before pop: [2]
+cloth after  pop: []
+count: [8, 8, 8, 0, 0, 7]
+count: [9, 8, 8, 0, 0, 8]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 8 tu[5] 8 
+i: 1
+count: [9, 9, 8, 0, 0, 8]
+count: [10, 9, 8, 0, 0, 8]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 8 tu[5] 8 
+i: 2
+cloth before pop: [2, 2, 2]
+cloth after  pop: [2, 2]
+count: [10, 9, 9, 0, 0, 9]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 9 tu[5] 9 
+i: 1
+count: [10, 10, 9, 0, 0, 9]
+count: [11, 10, 9, 0, 0, 9]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 9 tu[5] 9 
+i: 2
+cloth before pop: [2, 2, 2, 2]
+cloth after  pop: [2, 2, 2]
+count: [11, 10, 10, 0, 0, 10]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 10 tu[5] 10 
+i: 1
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 10 tu[5] 10 
+i: 1
+count: [11, 11, 10, 0, 0, 10]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 10 tu[5] 10 
+i: 2
+cloth before pop: [2, 2, 2]
+cloth after  pop: [2, 2]
+count: [11, 11, 11, 0, 0, 11]
+count: [12, 11, 11, 0, 0, 11]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 11 tu[5] 11 
+i: 1
+count: [12, 12, 11, 0, 0, 11]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 11 tu[5] 11 
+i: 2
+cloth before pop: [2, 2, 2]
+cloth after  pop: [2, 2]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 11 tu[5] 12 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [12, 12, 12, 0, 0, 13]
+count: [13, 12, 12, 0, 0, 13]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 12 tu[5] 13 
+i: 1
+count: [13, 13, 12, 0, 0, 13]
+count: [14, 13, 12, 0, 0, 13]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 12 tu[5] 13 
+i: 2
+cloth before pop: [2, 2, 2]
+cloth after  pop: [2, 2]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 13 tu[5] 14 
+i: 1
+count: [14, 13, 13, 0, 0, 14]
+count: [14, 14, 13, 0, 0, 14]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 13 tu[5] 14 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [14, 14, 14, 0, 0, 15]
+count: [15, 14, 14, 0, 0, 15]
+count: [16, 14, 14, 0, 0, 15]
+count: [17, 14, 14, 0, 0, 15]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 14 tu[5] 15 
+i: 1
+count: [17, 15, 14, 0, 0, 15]
+count: [18, 15, 14, 0, 0, 15]
+count: [19, 15, 14, 0, 0, 15]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 15 tu[5] 15 
+i: 1
+count: [19, 16, 14, 0, 0, 15]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 14 tu[5] 15 
+i: 2
+cloth before pop: [2, 2, 2, 2, 2, 2, 2]
+cloth after  pop: [2, 2, 2, 2, 2, 2]
+count: [19, 16, 15, 0, 0, 15]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 16 tu[5] 16 
+i: 1
+count: [19, 17, 15, 0, 0, 16]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 17 tu[5] 16 
+i: 1
+count: [19, 18, 15, 0, 0, 16]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 18 tu[5] 16 
+i: 1
+count: [19, 19, 15, 0, 0, 16]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 15 tu[5] 16 
+i: 2
+cloth before pop: [2, 2, 2, 2, 2, 2]
+cloth after  pop: [2, 2, 2, 2, 2]
+count: [19, 19, 16, 0, 0, 17]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 16 tu[5] 17 
+i: 2
+cloth before pop: [2, 2, 2, 2, 2]
+cloth after  pop: [2, 2, 2, 2]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 16 tu[5] 18 
+i: 2
+cloth before pop: [2, 2, 2, 2]
+cloth after  pop: [2, 2, 2]
+count: [19, 19, 17, 0, 0, 18]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 17 tu[5] 19 
+i: 2
+cloth before pop: [2, 2, 2]
+cloth after  pop: [2, 2]
+count: [19, 19, 18, 0, 0, 19]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 18 tu[5] 20 
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+count: [19, 19, 19, 0, 0, 21]
+count: [20, 19, 19, 0, 0, 21]
+count: [21, 19, 19, 0, 0, 21]
+count: [22, 19, 19, 0, 0, 21]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 19 tu[5] 21 
+i: 1
+count: [22, 20, 19, 0, 0, 21]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 20 tu[5] 21 
+i: 1
+count: [22, 21, 19, 0, 0, 21]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 19 tu[5] 21 
+i: 2
+cloth before pop: [2, 2, 2, 2]
+cloth after  pop: [2, 2, 2]
+count: [22, 21, 20, 0, 0, 22]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 20 tu[5] 22 
+i: 2
+cloth before pop: [2, 2, 2]
+cloth after  pop: [2, 2]
+count: [22, 21, 21, 0, 0, 23]
+trig : [0, 1, 0, 0, 0, 0]
+tu[1]: 21 tu[5] 23 
+i: 1
+count: [22, 22, 21, 0, 0, 23]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 21 tu[5] 23
+i: 2
+cloth before pop: [2, 2]
+cloth after  pop: [2]
+trig : [0, 0, 1, 0, 0, 0]
+tu[2]: 21 tu[5] 24
+i: 2
+Traceback (most recent call last):
+  File "c:\Users\lu\Desktop\Project\sc_2\Smart-Clothing-Sorting-System-main\main_form.py", line 349, in trigger_check
+    if self.mbus.cloth[t] == i : #TODO:==推杆推动的条件
+       ~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
