@@ -145,22 +145,27 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.horizontalHeader().setFont(font)
     def retranslateUi(self, Dialog):
         _translate = QCoreApplication.translate
-        self.groupBox_output.setTitle(_translate("Dialog", "motor"))
-        self.groupBox_input.setTitle(_translate("Dialog", "input"))
-        #self.label_7.setText(_translate("Dialog","波特率    "))
-        Dialog.setWindowTitle(_translate("Dialog", "MODBUS协议测试"))
-        self.pushButton.setText(_translate("Dialog", "连接"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Dialog", "YoLo检测"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("Dialog", "测试"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "设置"))
+        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        self.label_2.setText(_translate("Dialog", "img"))
+        self.btn_start.setText(_translate("Dialog", "开始"))
+        self.btn_reset.setText(_translate("Dialog", "重置"))
+        self.comboBox_mode.setItemText(0, _translate("Dialog", "颜色"))
+        self.comboBox_mode.setItemText(1, _translate("Dialog", "白浅深"))
+        self.comboBox_mode.setItemText(2, _translate("Dialog", "形状"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Dialog", "Tab 1"))
+        self.groupBox_output.setTitle(_translate("Dialog", "GroupBox"))
+        self.groupBox_input.setTitle(_translate("Dialog", "GroupBox"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("Dialog", "Tab 2"))
         self.btn_load.setText(_translate("Dialog", "加载设置"))
         self.btn_add.setText(_translate("Dialog", "添加一行"))
         self.btn_apply.setText(_translate("Dialog", "应用"))
-        #self.btn_load.
-
-#       self.mode_shift.setText(_translate("Dialog", "模式切换"))
-        self.label.setText(_translate("Dialog", "串口选择"))
         self.label_1.setText(_translate("Dialog", "波特率"))
+        self.label.setText(_translate("Dialog", "串口选择"))
+        self.Light.setText(_translate("Dialog", "TextLabel"))
+        self.pushButton.setText(_translate("Dialog", "连接"))
+        self.comboBox_2.setItemText(0, _translate("Dialog", "9600"))
+        self.comboBox_2.setItemText(1, _translate("Dialog", "38400"))
+        self.comboBox_2.setItemText(2, _translate("Dialog", "115200"))
         self.comboBox_1.setItemText(0, _translate("Dialog", "COM1"))
         self.comboBox_1.setItemText(1, _translate("Dialog", "COM2"))
         self.comboBox_1.setItemText(2, _translate("Dialog", "COM3"))
@@ -169,11 +174,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.comboBox_1.setItemText(5, _translate("Dialog", "COM6"))
         self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
         self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
-
-        self.comboBox_2.setItemText(0, _translate("Dialog", "38400"))
-        self.comboBox_2.setItemText(1, _translate("Dialog", "9600"))
-        self.comboBox_2.setItemText(2, _translate("Dialog", "115200"))
-
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
     def init_sys_tble(self):
         grid = QGridLayout(self.tabWidget)
         grid.addLayout(grid, 0, 0)  # 将主水平布局放入网格
@@ -369,41 +370,6 @@ class Dialog(QDialog,Ui_Dialog):
         elif self.mbus.trig_status[5] == 2: #trig_up
             self.mbus.cloth.pop(0)
 
-            
-
-                
-        #TODO: 这里需要写各个传感器触发后对应机械臂的行为，入队在show_img()函数中判断下降沿=》如果能改成在这里入队会更好
-
-        # if self.mbus.trig_status[0] == 1:#下降沿
-        #     print("拍照")
-
-        # for i in range(4):# i+1 ：【1，4】
-        #     if self.mbus.trig_status[i+1] == 1:#下降沿
-        #         self.detar[i+1] += self.mbus.count_trig_d[i+1]-self.mbus.count_trig_u[5]
-        #         if len(self.mbus.cloth) > 0:
-        #             print("cloth : ",self.mbus.cloth)
-        #             if self.mbus.cloth[len(self.mbus.cloth)-self.detar[i+1]] == i:
-        #                 self.mbus.values[i] = 65525
-        #                 self.mbus.func = 1
-                        
-        #                 self.mbus.cloth.pop(len(self.mbus.cloth)-self.detar[i+1])
-        #                 for i in range(5):
-        #                     self.mbus.count_trig_d[i] -=1
-        #     elif self.mbus.trig_status[i+1] == 2:#上升沿似乎无变化
-        #         pass
-        # print("detar : ",self.detar)
-        # if self.mbus.trig_status[5] == 2:#最后一个传感器上升沿出队
-        #     if (self.mbus.cloth)>0:
-        #         self.mbus.cloth.pop(0)
-        #     self.count -= 1
-    @pyqtSlot()
-    def on_mode_shift_clicked(self):
-        if self.mode == "color":
-            self.mode = "shape"
-            self.mode_shift.setText("形状检测")
-        elif self.mode == "shape":
-            self.mode = "color"
-            self.mode_shift.setText("颜色检测")
 
     def show_btn_input(self):   
         text = 0     
