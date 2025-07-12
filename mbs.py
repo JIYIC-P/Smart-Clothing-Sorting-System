@@ -81,32 +81,7 @@ class MBUS():
     #     #改回方向
     #     self.send_to_2(0,122)
 
-        
-  # def init_trigger(self):
-  #     """
-  #     初始化触发器
-  #     """
-  #     self.pre_trigger = [0,0,0,0,0,0]
-  #     self.new_trigger = [0,0,0,0,0,0]
-  #     self.trigger_state = [0,0,0,0,0,0]
-  #     self.IO_trigger = QTimer()
-  #     self.IO_trigger.timeout.connect(self.trigger_check)
-  #     self.IO_trigger.start(100)
 
-  # def trigger_check(self):
-  #     """
-  #     触发检查
-  #     """
-  #    self.new_trigger = self.in_once()
-  #     for i in range(6):
-  #         if self.new_trigger[i]> self.pre_trigger[i]:
-  #             self.trigger_state[i] = 1
-  #         elif self.new_trigger[i] < self.pre_trigger[i]:
-  #             self.trigger_state[i] = 2
-  #         elif self.new_trigger[i] == self.pre_trigger[i]:
-  #             self.trigger_state[i] = 0
-  #     
-  #         self.pre_trigger[i] = self.new_trigger[i]
 
     def open(self):
         """打开Modbus RTU串口连接"""
@@ -165,7 +140,9 @@ class MBUS():
                     time.sleep(0.1)
                 except Exception as e:
                     print(f"设置速度错误: sid{s[0]}{e}")
-            
+
+
+
     def set_distance(self):    
         """
         此函数修改电机控制板正反转速度
@@ -191,7 +168,7 @@ class MBUS():
                 print(f"设置距离错误: sid{s[0]}{e}")
 
 
-                
+
     def close(self):
         """关闭Modbus RTU串口连接"""
         if not self.isopend:
@@ -201,6 +178,8 @@ class MBUS():
             time.sleep(0.11)
             del self.master
             self.isopend = False
+
+
 
     def in_once(self):
         """
@@ -316,7 +295,6 @@ class MBUS():
 
 
 
-
     def set_salarate(self,id,value):
         with self.lock:
 
@@ -343,9 +321,10 @@ class MBUS():
             except Exception as e:
                 print(f"设置距离错误: sid{id}{e}")
 
+
+
 def main(): 
     print("end")
-
 
 
 

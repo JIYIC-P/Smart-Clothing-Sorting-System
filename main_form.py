@@ -129,9 +129,15 @@ class Dialog(QDialog,Ui_Dialog):
         self.update_all_fonts()
         # 在 Ui_init 或 setupUi 后添加
         self.label_2.setAlignment(Qt.AlignCenter)
+
+
+
     def resizeEvent(self, event):
         self.update_all_fonts()
         super().resizeEvent(event)
+
+
+
     def update_all_fonts(self):
         """根据窗口大小动态调整所有控件字体大小"""
         # 以1920x1080为基准，20为基准字号
@@ -143,6 +149,9 @@ class Dialog(QDialog,Ui_Dialog):
         # 只想让表格内容和表头都变大，可以单独设置
         self.tableWidget.setFont(font)
         self.tableWidget.horizontalHeader().setFont(font)
+
+
+
     def retranslateUi(self, Dialog):
         _translate = QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
@@ -328,6 +337,9 @@ class Dialog(QDialog,Ui_Dialog):
         # 连接按钮点击信号
         for each in self.btn_output:
             each.clicked.connect(lambda: self.out_btn_clicked(self.sender()))
+
+
+
     def init_trigger(self):
         """
         初始化触发器
@@ -335,6 +347,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.reg_trigger = QTimer()
         self.reg_trigger.timeout.connect(self.trigger_check)
         self.reg_trigger.start(100)
+
+
 
     def trigger_check(self):
         """
@@ -360,6 +374,7 @@ class Dialog(QDialog,Ui_Dialog):
                         self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
                         
 
+
         if self.mbus.trig_status[5] == 1:
             if len(self.mbus.cloth)>0 :
                 if self.mbus.cloth[0] < 0 : #TODO:==推杆推动的条件 
@@ -371,6 +386,7 @@ class Dialog(QDialog,Ui_Dialog):
             self.mbus.cloth.pop(0)
 
 
+
     def show_btn_input(self):   
         text = 0     
         for i in range(3):            
@@ -380,6 +396,9 @@ class Dialog(QDialog,Ui_Dialog):
                 else:
                     self.btn_input[text].setStyleSheet("background-color:red")
                 text += 1  
+
+
+
 
     @pyqtSlot()
     def  out_btn_clicked(self, btn):
@@ -393,16 +412,32 @@ class Dialog(QDialog,Ui_Dialog):
             self.mbus.func = 1
 
 
+
+    @pyqtSlot()
+    def  out_btn_start_clicked(self):
+        pass
+
+
+
+    @pyqtSlot()
+    def  out_btn_reset_clicked(self):
+        pass
+
+
+
     @pyqtSlot()
     def show_img(self):
         if self.camera:
             frame = self.streamer.grab_frame()
             if self.mode == "shape":
-                self.shape(frame)
+                self.match_shape(frame)
             elif self.mode == "color":
-                self.color(frame)
+                self.match_color(frame)
 
-    def shape(self,frame):
+
+
+
+    def match_shape(self,frame):
         img_yolo = self.model(frame, verbose=False)
         for result in img_yolo:
         # 获取检测到的类别、置信度、边界框
@@ -427,7 +462,10 @@ class Dialog(QDialog,Ui_Dialog):
             pix = pix.scaledToWidth(480)
             self.label_2.setPixmap (pix)  # 在label上显示图片
 
-    def color(self,frame):
+
+
+
+    def match_color(self,frame):
         if frame is None:
             time.sleep(0.1)
             return
@@ -478,31 +516,21 @@ class Dialog(QDialog,Ui_Dialog):
             #)
             #pixmap = QPixmap.fromImage(qimage).scaledToWidth(480)
             #self.label_2.setPixmap(pixmap)
-#
+
+
+
+
     def control(self,results):
         # 0号传感器下降沿触发
         if self.mbus.trig_status[0] == 1:
             if results:
-                
                 dominant_category = max(results, key=results.get)
                 self.mbus.cloth.append(dominant_category)  # 添加到列表
             else:
                 dominant_category = None  # 无分类结果
 
-  # @pyqtSlot()
-  # def showTime(self):
-  #     """   
-  #     Slot documentation goes here.
-  #     """
-  #     # TODO: not implemented yet
-  #     self.run_time_sec=self.run_time_sec+1
-  #     self.setWindowTitle(str(round(self.run_time_sec*0.1, 2)))
-  #     try:     
-  #         self.show_btn_output()
-  #         self.show_btn_input()
-  #     except:
-  #          pass
-           
+
+
     @pyqtSlot()
     def showTime(self):
         """   
@@ -524,12 +552,15 @@ class Dialog(QDialog,Ui_Dialog):
         except:
             pass
 
+
+
     def show_btn_output(self):   
         for i in range(5):            
             if  self.mbus.coils[i] == 0:
                 self.btn_output[i].setStyleSheet("background-color:red")
             else:
                 self.btn_output[i].setStyleSheet("background-color:green")
+
 
 
     def setup_led_indicator(self):
@@ -548,6 +579,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.Light.setPixmap(pixmap)
         self.Light.setScaledContents(True)
 
+
+
     def update_led(self, color):
         """更新LED颜色"""
         pixmap = QPixmap(20, 20)
@@ -559,6 +592,8 @@ class Dialog(QDialog,Ui_Dialog):
         painter.end()
         self.Light.setPixmap(pixmap)
 
+
+
     @pyqtSlot()
     def serial_connection(self):
         """连接/断开MODBUS设备"""
@@ -567,7 +602,6 @@ class Dialog(QDialog,Ui_Dialog):
                 self.mbus.PORT = self.comboBox_1.currentText()
                 self.mbus.BOARD_RATE = int(self.comboBox_2.currentText())
                 self.mbus.open()
-                # print(self.mbus.isopend)
                 if self.mbus.isopend:
                     self.pushButton.setText("断开")
                     self.update_led(Qt.green)  # 绿色表示已连接                    
@@ -581,12 +615,15 @@ class Dialog(QDialog,Ui_Dialog):
                 self.pushButton.setText("连接")
                 self.update_led(Qt.red)  # 红色表示未连接
 
+
+
     @pyqtSlot()
     def serial_close(self):
         if  self.mbus.isopend:
             self.mbus.close()
             self.pushButton.setText("连接")
             self.update_led(Qt.red)  # 红色表示未连接
+
 
 
     @pyqtSlot()    
@@ -632,6 +669,8 @@ class Dialog(QDialog,Ui_Dialog):
         except:
             QMessageBox.critical(self, "配置错误", " 无法保存配置文件！")   
 
+
+
     @pyqtSlot()
     def on_btn_load_clicked(self):
         print('加载配置')
@@ -664,9 +703,13 @@ class Dialog(QDialog,Ui_Dialog):
             QMessageBox.critical(self, "配置错误", f"读取配置文件时出错: {str(e)}")
        # print(self.mbus.speed)
 
+
+
     @pyqtSlot()
     def on_btn_add_clicked(self):
         self.insert_sys_cfg_line("NAME","DATA","TIPS")
+
+
 
     @pyqtSlot()
     def on_btn_apply_clicked(self):
@@ -691,6 +734,8 @@ class Dialog(QDialog,Ui_Dialog):
     #         time.sleep(0.1)
     #     self.mbus1.close()
 
+
+
     def insert_sys_cfg_line(self, cfg_name, cfg_dat, cfg_beizhu):
         print("插入行:", cfg_name, cfg_dat, cfg_beizhu)
         row = self.tableWidget.rowCount()
@@ -700,9 +745,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.setItem(row, 1, QTableWidgetItem(cfg_dat))
         self.tableWidget.setItem(row, 2, QTableWidgetItem(cfg_beizhu))
 
-        
 
-        
+
 def main():
     app = QApplication(sys.argv)
     window = Dialog()  
