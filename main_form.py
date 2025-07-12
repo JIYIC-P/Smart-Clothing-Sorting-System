@@ -393,7 +393,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def  out_btn_clicked(self, btn):
+    def out_btn_clicked(self, btn):
         if not self.mbus.isopend:
             QMessageBox.warning(self, "提示", "未连接串口")
         else:
@@ -406,7 +406,8 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def  out_btn_start_clicked(self):
+    def on_btn_start_clicked(self):
+        print("btn_start do")
         #开始运行识别
         self.mode = self.comboBox_mode.currentText()
         if self.mode == "形状":
@@ -416,17 +417,20 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def  out_btn_reset_clicked(self):
+    def on_btn_reset_clicked(self):
+        print("btn_reset do")
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
         self.mbus.coils = [0]*5
         self.mbus.values = [0,0,0,0,0]    
         self.mbus.t1 = [time.time() for _ in range(5)]
-        #电机运动参数
         self.mbus.count_trig_u = [0]*6
         self.mbus.cloth = []
-        # input寄存器状态和线圈状态
+        if self.mbus.isopend :
+            self.out_btn_clicked(self.btn_output[0])
+
+
 
     @pyqtSlot()
     def show_img(self):
