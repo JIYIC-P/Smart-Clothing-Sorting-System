@@ -152,8 +152,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.label_2.setText(_translate("Dialog", "img"))
         self.btn_start.setText(_translate("Dialog", "开始"))
         self.btn_reset.setText(_translate("Dialog", "重置"))
-        self.comboBox_mode.setItemText(0, _translate("Dialog", "颜色"))
-        self.comboBox_mode.setItemText(1, _translate("Dialog", "白浅深"))
+        self.comboBox_mode.setItemText(0, _translate("Dialog", "白浅深"))
+        self.comboBox_mode.setItemText(1, _translate("Dialog", "颜色"))
         self.comboBox_mode.setItemText(2, _translate("Dialog", "形状"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Dialog", "Tab 1"))
         self.groupBox_output.setTitle(_translate("Dialog", "GroupBox"))
@@ -439,7 +439,7 @@ class Dialog(QDialog,Ui_Dialog):
             frame = self.streamer.grab_frame()
             if self.mode == "形状":
                 self.match_shape(frame)
-            elif self.mode == "颜色":
+            elif self.mode == "白浅深":
                 self.match_color(frame)
 
 
