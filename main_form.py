@@ -19,7 +19,6 @@ colors = {
     3 :"蓝色",
     4 :"黄色",
 }
-cloth = []
 
 # 定义阈值（可根据需求调整）
 s_low = 30    # 低饱和度阈值（白色）
@@ -72,6 +71,14 @@ class Dialog(QDialog,Ui_Dialog):
     def __init__(self, parent=None):
         
         super(Dialog, self).__init__(parent)
+
+
+        self.cloth = []
+        self.average_hsv=0
+        self.worker=[[],[],[],[],[],[],[]]
+        self.t_put = [time.time() for _ in range(5)] #推杆出杆计时
+
+
         self.mode = None
         self.mbus = mbs.MBUS()
         self.Ui_init()
@@ -80,9 +87,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
-        self.init_trigger()
-        self.average_hsv=0
-        self.worker=[[],[],[],[],[],[],[]]
+        #self.init_trigger()
+
 
 
     def camera_init(self):
@@ -96,7 +102,6 @@ class Dialog(QDialog,Ui_Dialog):
     def Timer_init(self):
         #加入小时，分钟，和一个base作为基准
         self.base = 0
-
         self.hour=0
         self.min=0
         self.sec=0
@@ -111,17 +116,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.t_back.start(100)
         
           
-    def back(self):
-        t = time.time()
-        signal = 0
-        for i in range(5):
-            if self.mbus.coils[i] == 1:
-                if t - self.mbus.t1[i] > 0.7:
-                    signal = 1
-                    self.mbus.values[i] = 0
-                    self.btn_output[i].setAccessibleDescription("0")
-        if signal == 1:
-            self.mbus.func = 1
+
 
 
     def Ui_init(self):
@@ -352,49 +347,46 @@ class Dialog(QDialog,Ui_Dialog):
 
 
 
-    def init_trigger(self):
-        """
-        初始化触发器
-        """
+#    def init_trigger(self):
         #self.reg_trigger = QTimer()
         #self.reg_trigger.timeout.connect(self.trigger_check)
         #self.reg_trigger.start(100)
 
 
 
-    def trigger_check(self):
-        """
-        触发检查
-        """
-        for i in range(1,5):
-            if self.mbus.trig_status[i] == 1: #trig_down
-                t = self.mbus.count_trig_u[i]-self.mbus.count_trig_u[5]
-                print("trig :",self.mbus.trig_status)
-                print(f"tu[{i}]:",self.mbus.count_trig_u[i],"tu[5]",self.mbus.count_trig_u[5],"\ni:",i)
+    # def trigger_check(self):
+    #     """
+    #     触发检查
+    #     """
+    #     for i in range(1,5):
+    #         if self.mbus.trig_status[i] == 1: #trig_down
+    #             t = self.mbus.count_trig_u[i]-self.mbus.count_trig_u[5]
+    #             print("trig :",self.mbus.trig_status)
+    #             print(f"tu[{i}]:",self.mbus.count_trig_u[i],"tu[5]",self.mbus.count_trig_u[5],"\ni:",i)
 
-                if len(cloth)>0 :
-                    if cloth[t] == i : #TODO:==推杆推动的条件 
-                        self.mbus.values[i-1] = 62580
-                        btn = self.btn_output[i-1]
-                        if  btn.accessibleDescription()=='0':
-                            btn.setAccessibleDescription("1")
-                        self.mbus.func = 1
-                        print("cloth before pop:",cloth)
-                        cloth.pop(t)
-                        print("cloth after  pop:",cloth)
-                        time.sleep(0.2)
-                        self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
+    #             if len(self.cloth)>0 :
+    #                 if self.cloth[t] == i : #TODO:==推杆推动的条件 
+    #                     self.mbus.values[i-1] = 62580
+    #                     btn = self.btn_output[i-1]
+    #                     if  btn.accessibleDescription()=='0':
+    #                         btn.setAccessibleDescription("1")
+    #                     self.mbus.func = 1
+    #                     print("cloth before pop:",self.cloth)
+    #                     self.cloth.pop(t)
+    #                     print("cloth after  pop:",self.cloth)
+    #                     time.sleep(0.2)
+    #                     self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
                         
 
-        if self.mbus.trig_status[5] == 1:
-            if len(cloth)>0 :
-                if cloth[0] < 0 : #TODO:==推杆推动的条件 
-                    self.mbus.values[4] = 62580
-                    self.mbus.func = 1
-                    cloth.pop(0)
-                    self.mbus.count_trig_u[5] += 1
-        elif self.mbus.trig_status[5] == 2: #trig_up
-            cloth.pop(0)
+    #     if self.mbus.trig_status[5] == 1:
+    #         if len(self.cloth)>0 :
+    #             if self.cloth[0] < 0 : #TODO:==推杆推动的条件 
+    #                 self.mbus.values[4] = 62580
+    #                 self.mbus.func = 1
+    #                 self.cloth.pop(0)
+    #                 self.mbus.count_trig_u[5] += 1
+    #     elif self.mbus.trig_status[5] == 2: #trig_up
+    #         self.cloth.pop(0)
 
 
 
@@ -418,13 +410,26 @@ class Dialog(QDialog,Ui_Dialog):
           print("btn1 clicked ") 
 
     def trig_pusher(self,num):
-          btn=self.btn_output[num] 
-          No = int(btn.accessibleName())-1
-          if  btn.accessibleDescription()=='0':
-                self.mbus.values[No] = 62580
-                btn.setAccessibleDescription("1")
-          self.mbus.func = 1
-          
+        btn=self.btn_output[num] 
+        No = int(btn.accessibleName())-1
+        if  btn.accessibleDescription()=='0':
+            self.mbus.VALUES[No] = 62580
+            btn.setAccessibleDescription("1")
+        self.mbus.func = 1
+
+
+
+    def back(self):#推杆返回控制 通过定时器轮询实现
+        t = time.time()
+        signal = 0
+        for i in range(5):
+            if self.mbus.coils[i] == 1:
+                if t - self.t_put[i] > 0.7:
+                    signal = 1
+                    self.mbus.VALUES[i] = 0
+                    self.btn_output[i].setAccessibleDescription("0")
+        if signal == 1:
+            self.mbus.func = 1
 
 
 
@@ -435,7 +440,7 @@ class Dialog(QDialog,Ui_Dialog):
         else:
             No = int(btn.accessibleName())-1
             if  btn.accessibleDescription()=='0':
-                self.mbus.values[No] = 62580
+                self.mbus.COIL_VALUE[No] = 62580
                 btn.setAccessibleDescription("1")
             self.mbus.func = 1
 
@@ -464,7 +469,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
-        self.mbus.t1 = [time.time() for _ in range(5)]
+        self.t_put = [time.time() for _ in range(5)]
         self.mbus.count_trig_u = [0]*6
         cloth = []
         if self.mbus.isopend :
@@ -473,7 +478,7 @@ class Dialog(QDialog,Ui_Dialog):
                 if i > 0 :
                     signal = True
             if signal :
-                self.mbus.values[0] = 0
+                self.mbus.VALUES[0] = 0
                 self.btn_out_clicked(self.btn_output[0])
 
 
@@ -517,7 +522,7 @@ class Dialog(QDialog,Ui_Dialog):
                 self.txt_hsv.setPlainText(str(self.average_hsv))
                 #return
                 if  self.mbus.trig_status[0]==1 :
-                    #print(self.average_hsv.tolist())
+                    #print(self.average_hsv.tolist())e
                     self.worker[1]=self.average_hsv.tolist()
                 for i in range(5):
                     try:
@@ -528,7 +533,12 @@ class Dialog(QDialog,Ui_Dialog):
                             print("index :",b)
                         
                             if self.hsv_in_range(self.worker[b],color_ranges[i][0],color_ranges[i][1]):
-                                self.trig_pusher(i)
+                                self.trig_pusher(i)#推杆推出，信号变化
+                                # self.t_put[i] = time.time()#记录推杆推出的时间
+                                # self.mbus.coils[i] = 1 #记录线圈变化状态
+
+
+
                         if  self.mbus.trig_status[b]==2  :
                             self.worker[b+1]=self.worker[b]
                             self.worker[b] = []
@@ -637,68 +647,65 @@ class Dialog(QDialog,Ui_Dialog):
        
 
 
-    def guolv(self,hsv,s,v):
+    # def guolv(self,hsv,s,v):
 
-        # 定义要过滤的颜色范围（示例：过滤掉红色范围）
-        # 红色在HSV中的色调值通常在0-10和160-180之间
-        lower_trans1 = np.array([45, 50, 50])
-        upper_trans1 = np.array([90, 255, 255])
-        lower_trans2 = np.array([160, 50, 50])
-        upper_trans2 = np.array([180, 255, 255])
+    #     # 定义要过滤的颜色范围（示例：过滤掉红色范围）
+    #     # 红色在HSV中的色调值通常在0-10和160-180之间
+    #     lower_trans1 = np.array([45, 50, 50])
+    #     upper_trans1 = np.array([90, 255, 255])
+    #     lower_trans2 = np.array([160, 50, 50])
+    #     upper_trans2 = np.array([180, 255, 255])
 
-        # 创建红色掩膜
-        red_mask1 = cv2.inRange(hsv, lower_trans1, upper_trans1)
-        red_mask2 = cv2.inRange(hsv, lower_trans2, upper_trans2)
-        red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+    #     # 创建红色掩膜
+    #     red_mask1 = cv2.inRange(hsv, lower_trans1, upper_trans1)
+    #     red_mask2 = cv2.inRange(hsv, lower_trans2, upper_trans2)
+    #     red_mask = cv2.bitwise_or(red_mask1, red_mask2)
 
-        # 反转掩膜，得到非红色区域
-        non_trans_mask = cv2.bitwise_not(red_mask)
+    #     # 反转掩膜，得到非红色区域
+    #     non_trans_mask = cv2.bitwise_not(red_mask)
 
-        # 应用过滤掩膜到各通道
-        s_filtered = cv2.bitwise_and(s, s, mask=non_trans_mask)
-        v_filtered = cv2.bitwise_and(v, v, mask=non_trans_mask)
+    #     # 应用过滤掩膜到各通道
+    #     s_filtered = cv2.bitwise_and(s, s, mask=non_trans_mask)
+    #     v_filtered = cv2.bitwise_and(v, v, mask=non_trans_mask)
 
-        # 分类掩膜（使用过滤后的通道）
-        white_mask = (s_filtered < s_low) & (v_filtered > 200)      # 白色：低饱和度 + 高明度
-        light_mask = (s_filtered >= s_low) & (s_filtered < s_high)  # 浅色：中等饱和度
-        dark_mask = (s_filtered >= s_high) | (v_filtered < v_low)   # 深色：高饱和度 或 低明度
+    #     # 分类掩膜（使用过滤后的通道）
+    #     white_mask = (s_filtered < s_low) & (v_filtered > 200)      # 白色：低饱和度 + 高明度
+    #     light_mask = (s_filtered >= s_low) & (s_filtered < s_high)  # 浅色：中等饱和度
+    #     dark_mask = (s_filtered >= s_high) | (v_filtered < v_low)   # 深色：高饱和度 或 低明度
 
-        # 统计各类像素数量
-        results = {
-            1: cv2.countNonZero(white_mask.astype(np.uint8)),  # 大白
-            2: cv2.countNonZero(light_mask.astype(np.uint8)),  # 二白
-            3: cv2.countNonZero(dark_mask.astype(np.uint8))    # 其他
-        }
+    #     # 统计各类像素数量
+    #     results = {
+    #         1: cv2.countNonZero(white_mask.astype(np.uint8)),  # 大白
+    #         2: cv2.countNonZero(light_mask.astype(np.uint8)),  # 二白
+    #         3: cv2.countNonZero(dark_mask.astype(np.uint8))    # 其他
+    #     }
 
 
-        # 分类掩膜
-        white_mask = (s < s_low) & (v > 200)      # 白色：低饱和度 + 高明度
-        light_mask = (s >= s_low) & (s < s_high)  # 浅色：中等饱和度
-        dark_mask = (s >= s_high) | (v < v_low)   # 深色：高饱和度 或 低明度
+    #     # 分类掩膜
+    #     white_mask = (s < s_low) & (v > 200)      # 白色：低饱和度 + 高明度
+    #     light_mask = (s >= s_low) & (s < s_high)  # 浅色：中等饱和度
+    #     dark_mask = (s >= s_high) | (v < v_low)   # 深色：高饱和度 或 低明度
 
-        # 统计各类像素数量
-        results1 = {
-            1: cv2.countNonZero(white_mask.astype(np.uint8)),#大白
-            2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
-            3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
-        }
-        print("before:",results1)
-        print("after :",results)
-        #self.control(results)
-
-        
+    #     # 统计各类像素数量
+    #     results1 = {
+    #         1: cv2.countNonZero(white_mask.astype(np.uint8)),#大白
+    #         2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
+    #         3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
+    #     }
+    #     print("before:",results1)
+    #     print("after :",results)
+    #     #self.control(results)
 
 
 
-
-    def control(self,results):
-        # 0号传感器下降沿触发
-        if self.mbus.trig_status[0] == 1:
-            if results:
-                dominant_category = max(results, key=results.get)
-                cloth.append(dominant_category)  # 添加到列表
-            else:
-                dominant_category = None  # 无分类结果
+    # def control(self,results):
+    #     # 0号传感器下降沿触发
+    #     if self.mbus.trig_status[0] == 1:
+    #         if results:
+    #             dominant_category = max(results, key=results.get)
+    #             self.cloth.append(dominant_category)  # 添加到列表
+    #         else:
+    #             dominant_category = None  # 无分类结果
 
 
 

@@ -17,22 +17,23 @@ class MBUS():
 
 
         self.isopend = False
-        self.master = None
-        self.end = False
+        self.master = None #串口服务器
+        self.end = False #beating 线程结束信号量
+        self.func = 0  #beating 线程功能信号量
         # 传递信号量
 
-        self.func = 0  
-        self.config = []
-        self.distance = []
-        self.values = [0,0,0,0,0]    
-        self.t1 = [time.time() for _ in range(5)]
+        self.config = [] #推杆电机转速等配置信息，待优化
+        self.distance = [] #推杆距离，待优化
         #电机运动参数
 
 
         self.ADR_IN = 0
         self.NUM_IN = 6
-        self.ADR_COIL = 0
-        self.NUM_COIL = 5
+        self.ADR_COILS = 0
+        self.NUM_COILS = 5
+        self.VALUES = [0,0,0,0,0] #电机控制量
+        #self.ADR_COIL = 0
+        #self.COIL_VALUE = 0
         # 受控设备
 
 
@@ -50,26 +51,6 @@ class MBUS():
         # 默认心跳间隔
 
         self.lock = threading.Lock()
-
-
-    # def send_to_2(self,i,ADR):
-    #     try:       
-    #         int_value = int(i) #原精度为三位小数，受控端会将整数转化为小数
-    #         # 2. 拆分高低16位
-    #         high_word1 = (int_value >> 16) & 0xFFFF  # 高16位（右移16位）
-    #         low_word1 = int_value & 0xFFFF
-    #         print(f"i {i},ADR {ADR},high_word1 {high_word1},low_word1 {low_word1}")
-    #         with self.lock:
-
-    #             self.master.execute(
-    #                 2,
-    #                 fnc.WRITE_MULTIPLE_REGISTERS,
-    #                 starting_address= ADR,
-    #                 quantity_of_x = 2,
-    #                 output_value=[low_word1,high_word1]
-    #             )
-    #     except Exception as e:
-    #         print(f": {e}")
 
 
 
@@ -232,7 +213,7 @@ class MBUS():
                 self.in_once()
 
             elif func == 1:
-                self.coil_once()
+                self.coils_control()
                 self.func = 0
 
             elif func == 2:
@@ -242,10 +223,37 @@ class MBUS():
 
 
 
+    # def coil_control(self):
+    #     """
+    #     控制一个线圈
+        
+    #     参数:
+    #         ADR: 起始地址 (默认:0)
+    #         NUM: 线圈数量 (默认:8)
+    #         values: 控制值列表 (默认:全部断开)
+    #                [62580]表示闭合, [0]表示断开
+    #     """
+    #     if self.COIL_VALUE is None:
+    #         return
+    #     try:
+    #         with self.lock:
+    #             self.master.execute(
+    #                 1,
+    #                 fnc.WRITE_MULTIPLE_COILS,
+    #                 starting_address=self.ADR_COIL,
+    #                 quantity_of_x=1,
+    #                 output_value=self.COIL_VALUE
+    #             )
+    #     except Exception as e:
+    #         print(f"控制失败: {e}")
 
 
+    def set_coils(self,ADR=0,NUM=5,VALUES=None):
+        self.ADR_COILS = ADR
+        self.NUM = NUM
+        self.VALUES = VALUES
 
-    def coil_once(self):
+    def coils_control(self):
         """
         控制多个线圈
         
@@ -255,30 +263,21 @@ class MBUS():
             values: 控制值列表 (默认:全部断开)
                    [62580]表示闭合, [0]表示断开
         """
-        if self.values is None:
-            VALUES = [0] * self.NUM_COIL         
-        else :
-            VALUES = self.values
+        if self.VALUES is None:
+            return
         try:
-            #print("VALUES:",VALUES)
             with self.lock:
                 self.master.execute(
                     1,
                     fnc.WRITE_MULTIPLE_COILS,
-                    starting_address=self.ADR_COIL,
-                    quantity_of_x=self.NUM_COIL,
-                    output_value=VALUES
+                    starting_address=self.ADR_COILS,
+                    quantity_of_x=self.NUM_COILS,
+                    output_value=self.VALUES
                 )
-            for i in range(5):
-                if self.values[i] == 62580:
-                    self.t1[i] = time.time()
-                    self.coils[i] = 1
-                else :
-                    self.coils[i] = 0
         except Exception as e:
             print(f"控制失败: {e}")
 
-
+    
 
     def set_salarate(self,id,value):
         with self.lock:
@@ -305,13 +304,3 @@ class MBUS():
                 )
             except Exception as e:
                 print(f"设置距离错误: sid{id}{e}")
-
-
-
-def main(): 
-    print("end")
-
-
-
-if __name__ == "__main__":
-    main()
