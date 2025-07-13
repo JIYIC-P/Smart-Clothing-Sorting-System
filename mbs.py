@@ -40,7 +40,6 @@ class MBUS():
         self.cur_reg = [0]*6
         self.trig_status = [0]*6
         self.count_trig_u = [0]*6
-        self.cloth = []
         self.coils = [0]*5
         # input寄存器状态和线圈状态
         
@@ -71,15 +70,6 @@ class MBUS():
     #             )
     #     except Exception as e:
     #         print(f": {e}")
-
-
-    # def back(self):
-    #     #方向
-    #     self.send_to_2(1,122)
-    #     #启动
-    #     self.send_to_2(1,134)
-    #     #改回方向
-    #     self.send_to_2(0,122)
 
 
 
@@ -251,12 +241,7 @@ class MBUS():
                 self.func = 0
 
 
-    
-    def set_coil(self,ADR,NUM,values,func):
-            self.ADR_COIL = ADR
-            self.NUM_COIL = NUM
-            self.values = values
-            self.func = func
+
 
 
 

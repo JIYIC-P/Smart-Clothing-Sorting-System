@@ -2,14 +2,25 @@ import time
 import sys
 from Ui_main_form import Ui_Dialog 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 #颜色范围定义
 color_ranges = {
+    0 : ([0, 0, 200], [180, 50, 255]),        # 白色范围
     1 : ([0, 100, 100], [10, 255, 255]),      # 红色范围
     2 : ([40, 50, 50], [80, 255, 255]),       # 绿色范围
     3 : ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
     4 : ([20, 100, 100], [30, 255, 255]),     # 黄色范围
 }
+colors = {
+    0 :"白色",
+    1 :"红色",
+    2 :"绿色",
+    3 :"蓝色",
+    4 :"黄色",
+}
+cloth = []
+
 # 定义阈值（可根据需求调整）
 s_low = 30    # 低饱和度阈值（白色）
 s_high = 150  # 高饱和度阈值（深色）
@@ -70,8 +81,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_output()
         self.show_btn_input()
         self.init_trigger()
-
-
+        self.average_hsv=0
+        self.worker=[[],[],[],[],[],[],[]]
 
 
     def camera_init(self):
@@ -79,6 +90,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.streamer = ThreadedCamera(stream_link)
         self.streamer.open_cam()
         self.streamer.source=0
+        self.frame = None
 
 
     def Timer_init(self):
@@ -116,17 +128,19 @@ class Dialog(QDialog,Ui_Dialog):
         self.setupUi(self)
         self.btn_output = []
         self.btn_input = []
-        self.pushButton.clicked.connect(self.serial_connection)
+        self.pushButton.clicked.connect(self.serial_connect)
         self.btn_motor_init()
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
         #self.update_all_fonts()
         # 在 Ui_init 或 setupUi 后添加
-        self.label_2.setAlignment(Qt.AlignCenter)
+        #self.label_2.setAlignment(Qt.AlignCenter)
 
-
-
+    @pyqtSlot()
+    def on_applay_clicked(self):
+        uper_num=self.uper.toPlainText()
+        #down
     def resizeEvent(self, event):
         self.update_all_fonts()
         super().resizeEvent(event)
@@ -146,7 +160,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
 
-    def retranslateUi(self, Dialog):
+    def retranslateUixxxxx(self, Dialog):
         _translate = QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
         self.label_2.setText(_translate("Dialog", "img"))
@@ -167,36 +181,17 @@ class Dialog(QDialog,Ui_Dialog):
         self.Light.setText(_translate("Dialog", "TextLabel"))
         self.pushButton.setText(_translate("Dialog", "连接"))
         self.comboBox_2.setItemText(0, _translate("Dialog", "38400"))
-        self.comboBox_1.setItemText(0, _translate("Dialog", "COM1"))
-        self.comboBox_1.setItemText(1, _translate("Dialog", "COM2"))
-        self.comboBox_1.setItemText(2, _translate("Dialog", "COM3"))
-        self.comboBox_1.setItemText(3, _translate("Dialog", "COM4"))
+        self.comboBox_1.setItemText(0, _translate("Dialog", "COM3"))
+        self.comboBox_1.setItemText(1, _translate("Dialog", "COM4"))
+        self.comboBox_1.setItemText(2, _translate("Dialog", "COM1"))
+        self.comboBox_1.setItemText(3, _translate("Dialog", "COM2"))
         self.comboBox_1.setItemText(4, _translate("Dialog", "COM5"))
         self.comboBox_1.setItemText(5, _translate("Dialog", "COM6"))
         self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
         self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
-        self.init_color_comb()
 
-    def init_color_comb(self):
-        color_map = {
-            "红": QColor(255, 0, 0),
-            "绿": QColor(0, 255, 0),
-            "蓝": QColor(0, 0, 255),
-            "黄": QColor(255, 255, 0),
-            "紫": QColor(128, 0, 128),
-            "橙": QColor(255, 165, 0)
-        }
-        if not hasattr(self, "combo_list_color"): 
-            self.combo_list_color = []  
-        for i in range(5):
-            comb= QComboBox()
-            comb.setObjectName(f"combo_color_{i}")
-            self.combo_list_color.append(comb)
-            comb.addItems(["红", "绿", "蓝", "黄","紫", "橙"])
- 
-        
-            #self.combo_list_color.append(comb)
+
 
     def init_sys_tble(self):
         grid = QGridLayout(self.tabWidget)
@@ -216,8 +211,8 @@ class Dialog(QDialog,Ui_Dialog):
             "border: 1px solid #cccccc;"  # 边框
             "}"
         )
-    
 
+        
         # 初始化表格结构
         self.tableWidget.setColumnCount(3)
         self.tableWidget.setRowCount(0)
@@ -238,12 +233,8 @@ class Dialog(QDialog,Ui_Dialog):
             item.setSizeHint(QSize(80,80) )
             self.tableWidget.setHorizontalHeaderItem(col, item)
         
-            
         self.on_btn_load_clicked()
-        for i, comb in enumerate(self.combo_list_color):
-            self.tableWidget.setCellWidget(i+1, 1, comb)
-        
-        
+
     def btn_input_init(self):
         # 1. 创建主水平布局（用于放置4组垂直布局）
         main_hbox = QHBoxLayout()
@@ -365,9 +356,9 @@ class Dialog(QDialog,Ui_Dialog):
         """
         初始化触发器
         """
-        self.reg_trigger = QTimer()
-        self.reg_trigger.timeout.connect(self.trigger_check)
-        self.reg_trigger.start(100)
+        #self.reg_trigger = QTimer()
+        #self.reg_trigger.timeout.connect(self.trigger_check)
+        #self.reg_trigger.start(100)
 
 
 
@@ -381,29 +372,29 @@ class Dialog(QDialog,Ui_Dialog):
                 print("trig :",self.mbus.trig_status)
                 print(f"tu[{i}]:",self.mbus.count_trig_u[i],"tu[5]",self.mbus.count_trig_u[5],"\ni:",i)
 
-                if len(self.mbus.cloth)>0 :
-                    if self.mbus.cloth[t] == i : #TODO:==推杆推动的条件 
+                if len(cloth)>0 :
+                    if cloth[t] == i : #TODO:==推杆推动的条件 
                         self.mbus.values[i-1] = 62580
                         btn = self.btn_output[i-1]
                         if  btn.accessibleDescription()=='0':
                             btn.setAccessibleDescription("1")
                         self.mbus.func = 1
-                        print("cloth before pop:",self.mbus.cloth)
-                        self.mbus.cloth.pop(t)
-                        print("cloth after  pop:",self.mbus.cloth)
+                        print("cloth before pop:",cloth)
+                        cloth.pop(t)
+                        print("cloth after  pop:",cloth)
                         time.sleep(0.2)
                         self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
                         
 
         if self.mbus.trig_status[5] == 1:
-            if len(self.mbus.cloth)>0 :
-                if self.mbus.cloth[0] < 0 : #TODO:==推杆推动的条件 
+            if len(cloth)>0 :
+                if cloth[0] < 0 : #TODO:==推杆推动的条件 
                     self.mbus.values[4] = 62580
                     self.mbus.func = 1
-                    self.mbus.cloth.pop(0)
+                    cloth.pop(0)
                     self.mbus.count_trig_u[5] += 1
         elif self.mbus.trig_status[5] == 2: #trig_up
-            self.mbus.cloth.pop(0)
+            cloth.pop(0)
 
 
 
@@ -416,6 +407,24 @@ class Dialog(QDialog,Ui_Dialog):
                 else:
                     self.btn_input[text].setStyleSheet("background-color:red")
                 text += 1  
+
+    @pyqtSlot()
+    def on_btn1_clicked(self):
+          self.trig_pusher( 1)
+          time.sleep(0.5)
+          self.trig_pusher( 2)
+          time.sleep(0.5)
+          self.trig_pusher( 3)
+          print("btn1 clicked ") 
+
+    def trig_pusher(self,num):
+          btn=self.btn_output[num] 
+          No = int(btn.accessibleName())-1
+          if  btn.accessibleDescription()=='0':
+                self.mbus.values[No] = 62580
+                btn.setAccessibleDescription("1")
+          self.mbus.func = 1
+          
 
 
 
@@ -431,7 +440,6 @@ class Dialog(QDialog,Ui_Dialog):
             self.mbus.func = 1
 
 
-
     @pyqtSlot()
     def on_btn_start_clicked(self):
         print("btn_start do")
@@ -440,7 +448,13 @@ class Dialog(QDialog,Ui_Dialog):
         self.mode = self.comboBox_mode.currentText()
         if self.mode == "形状":
             self.model = YOLO("yolov8n.pt")
-
+        if not self.mbus.isopend:
+            self.serial_connect()
+            if self.mbus.isopend:
+                port = self.comboBox_1.currentText()
+                QMessageBox.warning(self, f"提示", "未提前设置串口，已自动连接{text}")
+            else :
+                QMessageBox.warning(self, f"错误", "未提前设置串口，自动连接{text}失败")
 
 
 
@@ -450,17 +464,16 @@ class Dialog(QDialog,Ui_Dialog):
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
-        #self.mbus.coils = [0]*5
-        #self.mbus.values = [0,0,0,0,0]    
         self.mbus.t1 = [time.time() for _ in range(5)]
         self.mbus.count_trig_u = [0]*6
-        self.mbus.cloth = []
+        cloth = []
         if self.mbus.isopend :
             signal = False
             for i in self.mbus.coils:
                 if i > 0 :
                     signal = True
             if signal :
+                self.mbus.values[0] = 0
                 self.btn_out_clicked(self.btn_output[0])
 
 
@@ -468,15 +481,130 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def show_img(self):
         if self.mode is not None:
+            frame = self.streamer.grab_frame() 
+            if frame is not None:
 
-            frame = self.streamer.grab_frame()
-            if self.mode == "形状":
-                self.match_shape(frame)
-            elif self.mode == "白浅深":
-                self.match_color(frame)
+                len_x = frame.shape[1]  # 获取图像大小
+                wid_y = frame.shape[0]
+                frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                
+                pix = QPixmap.fromImage(frame11)   
+                pix = pix.scaledToWidth(345)
+                self.img_orign.setPixmap (pix)  # 在label上显示图片
+
+                #koutu  zai koutu_img  shang xianshi 
+                # 定义裁剪区域
+                # 格式：[起始x坐标, 起始y坐标, 宽度, 高度]
+                # 注意：坐标从左上角开始，x向右增加，y向下增加
+                crop_x = 100  # 起始x坐标
+                crop_y = 0   # 起始y坐标
+                crop_width = 500  # 裁剪宽度
+                crop_height = 400  # 裁剪高度
+
+                # 裁剪图片
+                # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
+                frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
+
+                 
+                frame_koutu=self.cutoff_img(frame_koutu)#在此处更新了self.average_hsv
+                len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
+                wid_koutu_y = frame_koutu.shape[0]
+                frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                  
+                pix_koutu = QPixmap.fromImage(frame_koutu)   
+                pix_koutu = pix_koutu.scaledToWidth(345)
+                self.koutu_img.setPixmap (pix_koutu)  # 在label上显示图片
+                self.txt_hsv.setPlainText(str(self.average_hsv))
+                #return
+                if  self.mbus.trig_status[0]==1 :
+                    #print(self.average_hsv.tolist())
+                    self.worker[1]=self.average_hsv.tolist()
+                for i in range(5):
+                    try:
+                        print("workers",self.worker)
+                        b=i+1
+                        if  self.mbus.trig_status[b]==1  :
+                            print("worker:",self.worker[b])
+                            print("index :",b)
+                        
+                            if self.hsv_in_range(self.worker[b],color_ranges[i][0],color_ranges[i][1]):
+                                self.trig_pusher(i)
+                        if  self.mbus.trig_status[b]==2  :
+                            self.worker[b+1]=self.worker[b]
+                            self.worker[b] = []
+                    except:
+                        continue
+    def hsv_in_range(self, average,lower,upper):
+        print("average111：",average,len(average))
+
+        if (lower[0] <= average[0] <= upper[0] and
+            lower[1] <= average[1] <= upper[1] and
+            lower[2] <= average[2] <= upper[2]):
+            return True
+        return False # 如果没有匹配的颜色范围，返回 None
 
 
-            
+               
+
+
+
+
+              #jisuan pingjun hsv 
+              #txt_hsv.setPlainText(str_trig)
+
+
+             
+            #if self.mode == "形状":
+            #    self.match_shape(frame)
+            #elif self.mode == "白浅深":
+            #    self.match_color(frame)
+           
+             #self.trig_pusher  
+        # str_trig="trig= "+str(self.mbus.trig_status[0])+str(self.mbus.trig_status[1])+str(self.mbus.trig_status[2])+str(self.mbus.trig_status[3])+str(self.mbus.trig_status[4])+str(self.mbus.trig_status[5]) 
+        # self.txt_trg_state.setPlainText(str_trig)
+        #koutu deidao  img_koutu
+
+
+
+    def cutoff_img(self,img):
+        # 读取灰度图
+        #img = cv2.imread('333.jpg', 0)
+        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Otsu自动阈值分割
+        _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        masked_image = cv2.bitwise_and(img, img, mask=binary)
+        non_zero_pixels = masked_image[binary > 0]
+
+        # 计算平均值
+        self.average_hsv = np.mean(non_zero_pixels, axis=0)
+        return  masked_image
+        
+         
+#233 22 79
+
+#103148 154
+    def calculate_center_hsv(image, roi_size=200):
+        """
+        计算图像中心区域的HSV平均值
+        :param image: 输入图像（BGR格式）
+        :param roi_size: 中心区域大小（默认100x100像素）
+        :return: 平均HSV值（H, S, V）
+        """
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) 
+        height, width = image.shape[:2]
+        center_x, center_y = width // 2, height // 2
+        roi = hsv[
+            center_y - roi_size // 2 : center_y + roi_size // 2,
+            center_x - roi_size // 2 : center_x + roi_size // 2
+        ]
+        avg_hsv = np.mean(roi, axis=(0, 1))
+        return avg_hsv
+
+
+
+
+
+
     def match_shape(self,frame):
         img_yolo = self.model(frame, verbose=False)
         for result in img_yolo:
@@ -492,53 +620,74 @@ class Dialog(QDialog,Ui_Dialog):
                     print(f"高可信度目标: {class_name} ({confidence:.2f})")
 
         frame = img_yolo[0].plot()    
-        if frame is not None:
-            img = frame
-            show_image =img
-            len_x = show_image.shape[1]  # 获取图像大小
-            wid_y = show_image.shape[0]
-            frame = QImage(show_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-            pix = QPixmap.fromImage(frame)   
-            pix = pix.scaledToWidth(480)
-            self.label_2.setPixmap (pix)  # 在label上显示图片
+       
 
 
 
 
-    def match_color(self,frame):
+    def koutu_img(self,frame):
+        
         if frame is None:
             time.sleep(0.1)
+            self.calculate_center_hsv()
             return
-                # 显示原始彩色图像（新增部分）
-        height, width = frame.shape[:2]
-        bytes_per_line = 3 * width
-        qimg_original = QImage(
-            frame.data, 
-            width, 
-            height, 
-            bytes_per_line, 
-            QImage.Format_RGB888
-        ).rgbSwapped()
-        pixmap = QPixmap.fromImage(qimg_original).scaledToWidth(max(480, width))
-        self.label_2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.label_2.setMinimumSize(800, 660)  # 可根据需要设置更大
-        self.label_2.setPixmap(pixmap)   # 显示原始图像
+                
 
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        s = hsv[:, :, 1]  # 饱和度通道
-        v = hsv[:, :, 2]  # 明度通道
+
+       
+
+
+    def guolv(self,hsv,s,v):
+
+        # 定义要过滤的颜色范围（示例：过滤掉红色范围）
+        # 红色在HSV中的色调值通常在0-10和160-180之间
+        lower_trans1 = np.array([45, 50, 50])
+        upper_trans1 = np.array([90, 255, 255])
+        lower_trans2 = np.array([160, 50, 50])
+        upper_trans2 = np.array([180, 255, 255])
+
+        # 创建红色掩膜
+        red_mask1 = cv2.inRange(hsv, lower_trans1, upper_trans1)
+        red_mask2 = cv2.inRange(hsv, lower_trans2, upper_trans2)
+        red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+
+        # 反转掩膜，得到非红色区域
+        non_trans_mask = cv2.bitwise_not(red_mask)
+
+        # 应用过滤掩膜到各通道
+        s_filtered = cv2.bitwise_and(s, s, mask=non_trans_mask)
+        v_filtered = cv2.bitwise_and(v, v, mask=non_trans_mask)
+
+        # 分类掩膜（使用过滤后的通道）
+        white_mask = (s_filtered < s_low) & (v_filtered > 200)      # 白色：低饱和度 + 高明度
+        light_mask = (s_filtered >= s_low) & (s_filtered < s_high)  # 浅色：中等饱和度
+        dark_mask = (s_filtered >= s_high) | (v_filtered < v_low)   # 深色：高饱和度 或 低明度
+
+        # 统计各类像素数量
+        results = {
+            1: cv2.countNonZero(white_mask.astype(np.uint8)),  # 大白
+            2: cv2.countNonZero(light_mask.astype(np.uint8)),  # 二白
+            3: cv2.countNonZero(dark_mask.astype(np.uint8))    # 其他
+        }
+
+
         # 分类掩膜
         white_mask = (s < s_low) & (v > 200)      # 白色：低饱和度 + 高明度
         light_mask = (s >= s_low) & (s < s_high)  # 浅色：中等饱和度
         dark_mask = (s >= s_high) | (v < v_low)   # 深色：高饱和度 或 低明度
 
         # 统计各类像素数量
-        results = {
+        results1 = {
             1: cv2.countNonZero(white_mask.astype(np.uint8)),#大白
             2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
             3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
         }
-        self.control(results)
+        print("before:",results1)
+        print("after :",results)
+        #self.control(results)
+
+        
+
 
 
 
@@ -547,7 +696,7 @@ class Dialog(QDialog,Ui_Dialog):
         if self.mbus.trig_status[0] == 1:
             if results:
                 dominant_category = max(results, key=results.get)
-                self.mbus.cloth.append(dominant_category)  # 添加到列表
+                cloth.append(dominant_category)  # 添加到列表
             else:
                 dominant_category = None  # 无分类结果
 
@@ -621,7 +770,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def serial_connection(self):
+    def serial_connect(self):
         """连接/断开MODBUS设备"""
         if not self.mbus.isopend:
             try:
@@ -722,12 +871,10 @@ class Dialog(QDialog,Ui_Dialog):
                         self.mbus.config.append([int(cells[0]),int(d[0]),int(d[1]),int(d[2])])#sid
                     else :
                         pass
-                
         except FileNotFoundError:
             QMessageBox.critical(self, "配置错误", "配置文件不存在！")
         except Exception as e:
             QMessageBox.critical(self, "配置错误", f"读取配置文件时出错: {str(e)}")
-        
        # print(self.mbus.speed)
 
 

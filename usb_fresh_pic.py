@@ -40,7 +40,7 @@ class ThreadedCamera(object):
                 self.status, frame = self.capture.read()
                 
                 if self.status:
-                    self.frame = self._process_frame(frame)
+                    self.frame =  (frame)
                 else:
                     self.capture.release()  # 释放旧资源
                     self.capture = cv2.VideoCapture(self.source)
@@ -67,17 +67,7 @@ class ThreadedCamera(object):
             return None
         width = int(frame.shape[1])
         height = int(frame.shape[0])
-        frame= frame[int((height/2)-240):int((height/2)+240), int((width/2)-320):int((width/2)+320)]  # 裁剪中心区域
-        # 示例预处理步骤（根据实际需求调整）
-        # 1. 调整尺寸（可选）
-        #frame = cv2.resize(frame, (640, 480))  # 调整为 YOLO 输入尺寸
-        
-        # 2. 颜色空间转换（BGR → RGB）
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        # 其他可能的处理（如归一化、去噪等）
-        # frame = cv2.GaussianBlur(frame, (5, 5), 0)
-        
+        #frame= frame[int((height/2)-240):int((height/2)+240), int((width/2)-320):int((width/2)+320)]  # 裁剪中心区域
         return frame
  
  
