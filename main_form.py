@@ -4,6 +4,8 @@ from Ui_main_form import Ui_Dialog
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import configparser
+import json
 #颜色范围定义
 color_ranges = {
     0 : ([0, 0, 200], [180, 50, 255]),        # 白色范围
@@ -147,6 +149,11 @@ class Dialog(QDialog,Ui_Dialog):
             color_ranges[index][0][i]= range_col[i]-int(down_num)
             color_ranges[index][1][i]= range_col[i]+int(uper_num)
         print("color_ranges:",color_ranges)
+        # 将字典转为字符串后写入 INI
+        cfg = configparser.ConfigParser()
+        cfg['COLOR_RANGES'] = {'ranges': json.dumps(color_ranges)}
+        with open('color.ini', 'w', encoding='utf-8') as f:
+            cfg.write(f)
        
     def resizeEvent(self, event):
         self.update_all_fonts()
@@ -468,6 +475,18 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def on_btn_reset_clicked(self):
         print("btn_reset do")
+        
+        # 读取 color.ini 并还原 color_ranges
+        cfg = configparser.ConfigParser()
+        cfg.read('color.ini', encoding='utf-8')
+        ranges_str = cfg['COLOR_RANGES']['ranges']
+        color_ranges = json.loads(ranges_str)  # 还原为 dict
+
+        # 如果你需要把键从 str 转回 int：
+        color_ranges = {int(k): v for k, v in color_ranges.items()}
+
+        # 调试打印
+        print("已重新加载 color_ranges:", self.color_ranges)
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
