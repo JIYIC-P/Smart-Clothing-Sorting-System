@@ -139,8 +139,15 @@ class Dialog(QDialog,Ui_Dialog):
 
     @pyqtSlot()
     def on_applay_clicked(self):
+        range_col= self.average_hsv.tolist()
         uper_num=self.uper.toPlainText()
-        #down
+        down_num=self.downer.toPlainText()
+        index= self.choice_push.currentIndex()
+        for i in range(3):
+            color_ranges[index][0][i]= range_col[i]-int(down_num)
+            color_ranges[index][1][i]= range_col[i]+int(uper_num)
+        print("color_ranges:",color_ranges)
+       
     def resizeEvent(self, event):
         self.update_all_fonts()
         super().resizeEvent(event)

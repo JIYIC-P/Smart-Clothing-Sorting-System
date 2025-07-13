@@ -64,7 +64,7 @@
         <string>test</string>
        </property>
       </widget>
-      <widget class="QComboBox" name="choice_puh">
+      <widget class="QComboBox" name="choice_push">
        <property name="geometry">
         <rect>
          <x>1170</x>
@@ -129,7 +129,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>PushButton</string>
+        <string>应用</string>
        </property>
       </widget>
       <widget class="QTextEdit" name="txt_hsv">
