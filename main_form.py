@@ -70,7 +70,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_output()
         self.show_btn_input()
         self.init_trigger()
-      
+
+
 
 
     def camera_init(self):
@@ -121,6 +122,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.setup_led_indicator()
         self.init_sys_tble()
         self.update_all_fonts()
+        
         # 在 Ui_init 或 setupUi 后添加
         self.label_2.setAlignment(Qt.AlignCenter)
 
@@ -178,6 +180,28 @@ class Dialog(QDialog,Ui_Dialog):
         self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
         self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
+        self.init_color_comb()
+
+    def init_color_comb(self):
+        color_map = {
+            "红": QColor(255, 0, 0),
+            "绿": QColor(0, 255, 0),
+            "蓝": QColor(0, 0, 255),
+            "黄": QColor(255, 255, 0),
+            "紫": QColor(128, 0, 128),
+            "橙": QColor(255, 165, 0)
+        }
+        if not hasattr(self, "combo_list_color"): 
+            self.combo_list_color = []  
+        for i in range(5):
+            comb= QComboBox()
+            comb.setObjectName(f"combo_color_{i}")
+            self.combo_list_color.append(comb)
+            comb.addItems(["红", "绿", "蓝", "黄","紫", "橙"])
+ 
+        
+            #self.combo_list_color.append(comb)
+
     def init_sys_tble(self):
         grid = QGridLayout(self.tabWidget)
         grid.addLayout(grid, 0, 0)  # 将主水平布局放入网格
@@ -196,8 +220,8 @@ class Dialog(QDialog,Ui_Dialog):
             "border: 1px solid #cccccc;"  # 边框
             "}"
         )
+    
 
-        
         # 初始化表格结构
         self.tableWidget.setColumnCount(3)
         self.tableWidget.setRowCount(0)
@@ -218,8 +242,12 @@ class Dialog(QDialog,Ui_Dialog):
             item.setSizeHint(QSize(80,80) )
             self.tableWidget.setHorizontalHeaderItem(col, item)
         
+            
         self.on_btn_load_clicked()
-
+        for i, comb in enumerate(self.combo_list_color):
+            self.tableWidget.setCellWidget(i+1, 1, comb)
+        
+        
     def btn_input_init(self):
         # 1. 创建主水平布局（用于放置4组垂直布局）
         main_hbox = QHBoxLayout()
@@ -443,8 +471,7 @@ class Dialog(QDialog,Ui_Dialog):
                 self.match_color(frame)
 
 
-
-
+            
     def match_shape(self,frame):
         img_yolo = self.model(frame, verbose=False)
         for result in img_yolo:
@@ -704,10 +731,12 @@ class Dialog(QDialog,Ui_Dialog):
                         self.mbus.config.append([int(cells[0]),int(d[0]),int(d[1]),int(d[2])])#sid
                     else :
                         pass
+                
         except FileNotFoundError:
             QMessageBox.critical(self, "配置错误", "配置文件不存在！")
         except Exception as e:
             QMessageBox.critical(self, "配置错误", f"读取配置文件时出错: {str(e)}")
+        
        # print(self.mbus.speed)
 
 
