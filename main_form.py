@@ -99,17 +99,16 @@ class Dialog(QDialog,Ui_Dialog):
         
           
     def back(self):
-        if self.mode is not None:
-            t = time.time()
-            signal = 0
-            for i in range(5):
-                if self.mbus.coils[i] == 1:
-                    if t - self.mbus.t1[i] > 0.7:
-                        signal = 1
-                        self.mbus.values[i] = 0
-                        self.btn_output[i].setAccessibleDescription("0")
-            if signal == 1:
-                self.mbus.func = 1
+        t = time.time()
+        signal = 0
+        for i in range(5):
+            if self.mbus.coils[i] == 1:
+                if t - self.mbus.t1[i] > 0.7:
+                    signal = 1
+                    self.mbus.values[i] = 0
+                    self.btn_output[i].setAccessibleDescription("0")
+        if signal == 1:
+            self.mbus.func = 1
 
 
     def Ui_init(self):
@@ -121,7 +120,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
-        self.update_all_fonts()
+        #self.update_all_fonts()
         # 在 Ui_init 或 setupUi 后添加
         self.label_2.setAlignment(Qt.AlignCenter)
 
@@ -135,9 +134,8 @@ class Dialog(QDialog,Ui_Dialog):
 
     def update_all_fonts(self):
         """根据窗口大小动态调整所有控件字体大小"""
-        # 以1920x1080为基准，20为基准字号
-        scale_factor = min(self.width() / 1440, self.height() / 900)
-        font_size = max(12, int(20 * scale_factor * 1.2))  # 最小12
+        scale_factor = min(self.width() / 1440, self.height() / 820)
+        font_size = max(10, int(20 * scale_factor * 1))  # 最小10
         font = QFont('微软雅黑', font_size)
         font.setBold(True)
         self.setFont(font)
@@ -167,9 +165,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.label.setText(_translate("Dialog", "串口选择"))
         self.Light.setText(_translate("Dialog", "TextLabel"))
         self.pushButton.setText(_translate("Dialog", "连接"))
-        self.comboBox_2.setItemText(0, _translate("Dialog", "9600"))
-        self.comboBox_2.setItemText(1, _translate("Dialog", "38400"))
-        self.comboBox_2.setItemText(2, _translate("Dialog", "115200"))
+        self.comboBox_2.setItemText(0, _translate("Dialog", "38400"))
         self.comboBox_1.setItemText(0, _translate("Dialog", "COM1"))
         self.comboBox_1.setItemText(1, _translate("Dialog", "COM2"))
         self.comboBox_1.setItemText(2, _translate("Dialog", "COM3"))
@@ -179,6 +175,9 @@ class Dialog(QDialog,Ui_Dialog):
         self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
         self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
+
+
+
     def init_sys_tble(self):
         grid = QGridLayout(self.tabWidget)
         grid.addLayout(grid, 0, 0)  # 将主水平布局放入网格
@@ -279,6 +278,9 @@ class Dialog(QDialog,Ui_Dialog):
         
          # 8. 应用布局
         self.groupBox_input.setLayout(grid)
+
+
+
     def btn_motor_init(self):
         # 1. 创建水平布局 hbox 并添加按钮
         hbox = QHBoxLayout()
@@ -331,7 +333,7 @@ class Dialog(QDialog,Ui_Dialog):
         
         # 连接按钮点击信号
         for each in self.btn_output:
-            each.clicked.connect(lambda: self.out_btn_clicked(self.sender()))
+            each.clicked.connect(lambda: self.btn_out_clicked(self.sender()))
 
 
 
@@ -394,7 +396,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def out_btn_clicked(self, btn):
+    def btn_out_clicked(self, btn):
         if not self.mbus.isopend:
             QMessageBox.warning(self, "提示", "未连接串口")
         else:
@@ -409,6 +411,7 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def on_btn_start_clicked(self):
         print("btn_start do")
+        #print(self.width(),self.height())
         #开始运行识别
         self.mode = self.comboBox_mode.currentText()
         if self.mode == "形状":
@@ -423,13 +426,18 @@ class Dialog(QDialog,Ui_Dialog):
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
-        self.mbus.coils = [0]*5
-        self.mbus.values = [0,0,0,0,0]    
+        #self.mbus.coils = [0]*5
+        #self.mbus.values = [0,0,0,0,0]    
         self.mbus.t1 = [time.time() for _ in range(5)]
         self.mbus.count_trig_u = [0]*6
         self.mbus.cloth = []
         if self.mbus.isopend :
-            self.out_btn_clicked(self.btn_output[0])
+            signal = False
+            for i in self.mbus.coils:
+                if i > 0 :
+                    signal = True
+            if signal :
+                self.btn_out_clicked(self.btn_output[0])
 
 
 
@@ -508,24 +516,6 @@ class Dialog(QDialog,Ui_Dialog):
             3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
         }
         self.control(results)
-        # 显示图像（可选：用颜色标记分类结果）
-        #if frame is not None:
-        #    classified = np.zeros_like(frame)
-        #    classified[white_mask] = [255, 255, 255]  # 白色
-        #    classified[light_mask] = [200, 200, 200]  # 浅色（灰色）
-        #    classified[dark_mask] = [50, 50, 50]      # 深色（深灰）
-        #    # 转换为QImage并显示
-            #height, width = classified.shape[:2]
-            #qimage = QImage(
-            #    classified.data, 
-            #    width, 
-            #    height, 
-            #    width * 3, 
-            #    QImage.Format_RGB888
-            #)
-            #pixmap = QPixmap.fromImage(qimage).scaledToWidth(480)
-            #self.label_2.setPixmap(pixmap)
-
 
 
 
@@ -579,14 +569,14 @@ class Dialog(QDialog,Ui_Dialog):
     def setup_led_indicator(self):
         """设置圆形LED指示灯"""
         self.Light.setText("")  # 清空文本
-        self.Light.setFixedSize(20, 20)
+        self.Light.setFixedSize(40, 40)
         
-        pixmap = QPixmap(20, 20)
+        pixmap = QPixmap(40, 40)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setBrush(QColor(255, 0, 0))  # 红色
         painter.setPen(Qt.NoPen)
-        painter.drawEllipse(1, 1, 18, 18)  # 留1像素边距
+        painter.drawEllipse(1, 1, 38, 38)  # 留1像素边距
         painter.end()
         
         self.Light.setPixmap(pixmap)
@@ -596,12 +586,12 @@ class Dialog(QDialog,Ui_Dialog):
 
     def update_led(self, color):
         """更新LED颜色"""
-        pixmap = QPixmap(20, 20)
+        pixmap = QPixmap(40, 40)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setBrush(QColor(color))
         painter.setPen(Qt.NoPen)
-        painter.drawEllipse(1, 1, 18, 18)
+        painter.drawEllipse(1, 1, 38, 38)
         painter.end()
         self.Light.setPixmap(pixmap)
 
