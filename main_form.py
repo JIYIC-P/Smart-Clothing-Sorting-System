@@ -135,12 +135,46 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
+        self.read_color_ini()
         #self.update_all_fonts()
         # 在 Ui_init 或 setupUi 后添加
         #self.label_2.setAlignment(Qt.AlignCenter)
+    def tune_hsv_threshold(self,img):
+    # """
+    # 调整HSV阈值并返回处理后的图像
+    # """
+        #img = cv2.imread(path)
+        if img is None:
+            raise FileNotFoundError('图片没找到')
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+        cv2.namedWindow('Tune')
+        for ch in ['H', 'S', 'V']:
+            for rng in ['min', 'max']:
+                default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
+                cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
+                                {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
+
+        while True:
+            hmin = cv2.getTrackbarPos('Hmin', 'Tune')
+            smin = cv2.getTrackbarPos('Smin', 'Tune')
+            vmin = cv2.getTrackbarPos('Vmin', 'Tune')
+            hmax = cv2.getTrackbarPos('Hmax', 'Tune')
+            smax = cv2.getTrackbarPos('Smax', 'Tune')
+            vmax = cv2.getTrackbarPos('Vmax', 'Tune')
+
+            mask = cv2.inRange(hsv, (hmin, smin, vmin), (hmax, smax, vmax))
+            mask = cv2.bitwise_not(mask)  # 1=衣物区域
+            vis = cv2.bitwise_and(img, img, mask=mask)
+
+            cv2.imshow('mask', mask)
+            cv2.imshow('result', vis)
+            if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
+                cv2.destroyAllWindows()
+                return vis  # 返回处理后的图像
     @pyqtSlot()
     def on_applay_clicked(self):
+        global color_ranges  # 声明使用全局变量
         range_col= self.average_hsv.tolist()
         uper_num=self.uper.toPlainText()
         down_num=self.downer.toPlainText()
@@ -149,11 +183,17 @@ class Dialog(QDialog,Ui_Dialog):
             color_ranges[index][0][i]= range_col[i]-int(down_num)
             color_ranges[index][1][i]= range_col[i]+int(uper_num)
         print("color_ranges:",color_ranges)
-        # 将字典转为字符串后写入 INI
+        # 读取 color.ini 并还原 color_ranges
         cfg = configparser.ConfigParser()
-        cfg['COLOR_RANGES'] = {'ranges': json.dumps(color_ranges)}
-        with open('color.ini', 'w', encoding='utf-8') as f:
-            cfg.write(f)
+        cfg.read('color.ini', encoding='utf-8')
+        ranges_str = cfg['COLOR_RANGES']['ranges']
+        color_ranges = json.loads(ranges_str)  # 还原为 dict
+
+        # 如果你需要把键从 str 转回 int：
+        color_ranges = {int(k): v for k, v in color_ranges.items()}
+
+        # 调试打印
+        print("已重新加载 color_ranges:", color_ranges)
        
     def resizeEvent(self, event):
         self.update_all_fonts()
@@ -470,13 +510,8 @@ class Dialog(QDialog,Ui_Dialog):
             else :
                 QMessageBox.warning(self, f"错误", "未提前设置串口，自动连接{text}失败")
 
-
-
-    @pyqtSlot()
-    def on_btn_reset_clicked(self):
-        print("btn_reset do")
-        
-        # 读取 color.ini 并还原 color_ranges
+    def read_color_ini(self):
+         # 读取 color.ini 并还原 color_ranges
         cfg = configparser.ConfigParser()
         cfg.read('color.ini', encoding='utf-8')
         ranges_str = cfg['COLOR_RANGES']['ranges']
@@ -486,7 +521,13 @@ class Dialog(QDialog,Ui_Dialog):
         color_ranges = {int(k): v for k, v in color_ranges.items()}
 
         # 调试打印
-        print("已重新加载 color_ranges:", self.color_ranges)
+        print("已重新加载 color_ranges:", color_ranges) 
+
+    @pyqtSlot()
+    def on_btn_reset_clicked(self):
+        print("btn_reset do")
+        
+        self.read_color_ini()
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
@@ -532,7 +573,7 @@ class Dialog(QDialog,Ui_Dialog):
                 frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
 
                  
-                frame_koutu=self.cutoff_img(frame_koutu)#在此处更新了self.average_hsv
+                frame_koutu=self.tune_hsv_threshold(frame_koutu)#在此处更新了self.average_hsv
                 len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
                 wid_koutu_y = frame_koutu.shape[0]
                 frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
