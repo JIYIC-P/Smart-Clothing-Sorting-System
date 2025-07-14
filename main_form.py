@@ -30,6 +30,7 @@ v_low = 50    # 低明度阈值（深色）
 from PyQt5.QtCore import (
     Qt,
     pyqtSlot,
+    QEvent,
     QCoreApplication,
     QTimer,
     QObject,
@@ -90,7 +91,15 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_output()
         self.show_btn_input()
         #self.init_trigger()
+        self.installEventFilter(self)
+        self.key_pressed = None
 
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress:
+            self.key_pressed = event.key()
+        elif event.type() == QEvent.KeyRelease:
+            self.key_pressed = None
+        return super().eventFilter(obj, event)
 
     def camera_init(self):
         stream_link = "rtsp://192.168.1.100/user=admin&password=&channel=1&stream=0.sdp?"
@@ -541,7 +550,6 @@ class Dialog(QDialog,Ui_Dialog):
             if frame is not None:
 
                 self.show_orin_img(self,frame)#在Qt上显示原图
-
                 frame_koutu = self.cut_img(frame)#裁剪图片
 
                 #判断下降沿与上升沿
@@ -611,6 +619,7 @@ class Dialog(QDialog,Ui_Dialog):
         frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
         pix_koutu = QPixmap.fromImage(frame_koutu)   
         pix_koutu = pix_koutu.scaledToWidth(345)
+
         self.txt_hsv.setPlainText(str(self.average_hsv))
         self.koutu_img.setPixmap (pix_koutu)  
         # # 在label上显示图片,koutu_img函数是返回
@@ -674,15 +683,18 @@ class Dialog(QDialog,Ui_Dialog):
             mask = cv2.bitwise_not(mask)  # 1=衣物区域
 
             vis = cv2.bitwise_and(img, img, mask=mask)
-            cv2.imshow('vis', vis)
-            cv2.setWindowProperty('vis', cv2.WND_PROP_TOPMOST, 1)
-    
-            cv2.imshow('mask', mask)
-            cv2.setWindowProperty('mask', cv2.WND_PROP_TOPMOST, 1)
-            if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
+            
+            self.show_fix_img(vis)
+            # cv2.imshow('vis', vis)
+            # cv2.imshow('mask',mask)
+            QApplication.processEvents()
+            if hasattr(self, 'key_pressed') and self.key_pressed == Qt.Key_Escape:
                 self.average_hsv = np.mean(vis, axis=0)
-                cv2.destroyAllWindows()
+                delattr(self, 'key_pressed')  # 清除按键状态
                 return vis  # 返回处理后的图像
+            # if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
+            #     self.average_hsv = np.mean(vis, axis=0)
+            #     return vis  # 返回处理后的图像
 
 
     def cutoff_img(self,img):
