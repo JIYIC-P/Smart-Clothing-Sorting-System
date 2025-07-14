@@ -120,8 +120,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.timer.start(100)
 
         self.t_YoLo=QTimer()
-        self.t_YoLo.timeout.connect(self.show_img)
-        #self.t_YoLo.timeout.connect(self.update)
+        #self.t_YoLo.timeout.connect(self.show_img)
+        self.t_YoLo.timeout.connect(self.update)
         self.t_YoLo.start(100)
 
         self.t_back=QTimer()
@@ -139,7 +139,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.setup_led_indicator()
         self.init_sys_tble()
         self.read_color_ini()
-
+        
         self.Hmin_slider.setRange(0, 179)
         self.Hmin_slider.setValue(0)
         self.Hmax_slider.setRange(0, 179)
@@ -160,36 +160,97 @@ class Dialog(QDialog,Ui_Dialog):
         self.Vmax_slider.setValue(255)
         self.Vmin_slider.valueChanged.connect(self.update_HSV_values)
         self.Vmax_slider.valueChanged.connect(self.update_HSV_values)
+        self.load_HSV_from_ini()
         self.update_HSV_values()
             
+
+    #@pyqtSlot()
+    #def on_applay_clicked(self):
+    #    global color_ranges  # 声明使用全局变量
+    #    range_col= self.average_hsv.tolist()
+    #    #uper_num=self.uper.toPlainText()
+    #    #down_num=self.downer.toPlainText()
+    #    uper_num= 30
+    #    down_num= 30
+    #    index= self.choice_push.currentIndex()
+    #    print(index)
+    #    for i in range(3):
+    #        color_ranges[index][0][i]= range_col[i]-int(down_num)
+    #        color_ranges[index][1][i]= range_col[i]+int(uper_num)
+    #    print("color_ranges:",color_ranges)
+    #    # 读取 color.ini 并还原 color_ranges
+    #    cfg = configparser.ConfigParser()
+    #    cfg.read('color.ini', encoding='utf-8')
+    #    ranges_str = cfg['COLOR_RANGES']['ranges']
+    #    color_ranges = json.loads(ranges_str)  # 还原为 dict
+#
+    #    # 如果你需要把键从 str 转回 int：
+    #    color_ranges = {int(k): v for k, v in color_ranges.items()}
+#
+    #    # 调试打印
+    #    print("已重新加载 color_ranges:", color_ranges)
 
     @pyqtSlot()
     def on_applay_clicked(self):
         global color_ranges  # 声明使用全局变量
-        range_col= self.average_hsv.tolist()
-        uper_num=self.uper.toPlainText()
-        down_num=self.downer.toPlainText()
-        index= self.choice_push.currentIndex()
+        
+        # 1. 获取当前颜色范围和阈值
+        range_col = self.average_hsv.tolist()
+        uper_num = 30  # self.uper.toPlainText()
+        down_num = 30  # self.downer.toPlainText()
+        index = self.choice_push.currentIndex()
+        print(index)
+        
+        # 2. 更新颜色范围
         for i in range(3):
-            color_ranges[index][0][i]= range_col[i]-int(down_num)
-            color_ranges[index][1][i]= range_col[i]+int(uper_num)
-        print("color_ranges:",color_ranges)
-        # 读取 color.ini 并还原 color_ranges
+            color_ranges[index][0][i] = max(0, range_col[i] - int(down_num))  # 确保不低于0
+            color_ranges[index][1][i] = min(255, range_col[i] + int(uper_num))  # 确保不超过255
+        
+        print("更新后的color_ranges:", color_ranges)
+        
+        # 3. 写入配置文件
+        self.save_color_ranges_to_ini()
+        
+        # 4. 重新读取验证（可选）
+        self.load_color_ranges_from_ini()
+        print("重新加载后的color_ranges:", color_ranges)
+
+    def save_color_ranges_to_ini(self):
+        """将color_ranges保存到color.ini文件"""
+        cfg = configparser.ConfigParser()
+        
+        # 将color_ranges转换为可序列化的格式
+        ranges_str = json.dumps(color_ranges)
+        
+        # 写入配置
+        cfg['COLOR_RANGES'] = {
+            'ranges': ranges_str
+        }
+        
+        # 写入文件
+        with open('color.ini', 'w', encoding='utf-8') as configfile:
+            cfg.write(configfile)
+        
+        print("颜色范围已保存到color.ini")
+
+    def load_color_ranges_from_ini(self):
+        """从color.ini加载color_ranges"""
+        global color_ranges
+        
         cfg = configparser.ConfigParser()
         cfg.read('color.ini', encoding='utf-8')
-        ranges_str = cfg['COLOR_RANGES']['ranges']
-        color_ranges = json.loads(ranges_str)  # 还原为 dict
-
-        # 如果你需要把键从 str 转回 int：
-        color_ranges = {int(k): v for k, v in color_ranges.items()}
-
-        # 调试打印
-        print("已重新加载 color_ranges:", color_ranges)
-
-
+        
+        if 'COLOR_RANGES' in cfg:
+            ranges_str = cfg['COLOR_RANGES']['ranges']
+            color_ranges = json.loads(ranges_str)
+            # 将字典键转换为int（如果需要）
+            color_ranges = {int(k): v for k, v in color_ranges.items()}
+        else:
+            print("警告: color.ini中没有找到COLOR_RANGES配置")
+            color_ranges = {}  # 默认值
     def resizeEvent(self, event):
-        self.update_all_fonts()
-        super().resizeEvent(event)
+            self.update_all_fonts()
+            super().resizeEvent(event)
 
 
     def update_all_fonts(self):
@@ -475,7 +536,7 @@ class Dialog(QDialog,Ui_Dialog):
         if self.mode is not None:
             frame = self.streamer.grab_frame() 
             if frame is not None:
-
+                print("Top-left pixel (B,G,R):", frame[0, 0])  # OpenCV默认是BGR
                 len_x = frame.shape[1]  # 获取图像大小
                 wid_y = frame.shape[0]
                 frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
@@ -543,50 +604,87 @@ class Dialog(QDialog,Ui_Dialog):
                         continue
 
 
+    # @pyqtSlot()
+    # def update(self):
+    #     if self.mode is not None:
+    #         frame = self.streamer.grab_frame() 
+    #         if frame is not None:
+    #             self.show_orin_img(frame)#在Qt上显示原图
+    #             frame_koutu = self.cut_img(frame)#裁剪图片
+    #             frame_koutu=self.tune_hsv_threshold(frame_koutu)#若触发相机位传感器下降沿则调色
+    #             self.average_hsv = np.mean(frame_koutu, axis=0)
+    #             non_zero_pixels = frame_koutu[]
+    #             self.show_fix_img(frame_koutu)
+
+    #             #判断下降沿与上升沿
+    #             if  self.mbus.trig_status[0]==1 :
+
+    #                 #在此处更新了self.average_hsv，现在的抠图算法，手动识别
+    #                 #frame_koutu=self.cutoff_img(frame_koutu)
+    #                 #在此处更新了self.average_hsv，原本的抠图算法，自动识别
+    #                 #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
+    #                 #print(self.average_hsv.tolist())
+    #                 self.worker[1]=self.average_hsv.tolist()
+
+    #             for i in range(5):
+    #                 try:
+    #                     #print("workers",self.worker)
+    #                     b=i+1
+    #                     if  self.mbus.trig_status[b]==1  :
+    #                         print("worker:",self.worker[b])
+    #                         print("index :",b)
+                        
+    #                         if self.hsv_in_range(self.worker[b],color_ranges[i][0],color_ranges[i][1]):
+    #                             self.trig_pusher(i)#推杆推出，信号变化
+    #                             # self.t_put[i] = time.time()#记录推杆推出的时间
+    #                             # self.mbus.coils[i] = 1 #记录线圈变化状态
+    #                     if  self.mbus.trig_status[b]==2  :
+    #                         self.worker[b+1]=self.worker[b]
+    #                         self.worker[b] = []
+    #                 except:
+    #                     continue
     @pyqtSlot()
     def update(self):
         if self.mode is not None:
             frame = self.streamer.grab_frame() 
             if frame is not None:
+                self.show_orin_img(frame)  # 在Qt上显示原图
+                frame_koutu = self.cut_img(frame)  # 裁剪图片
+                frame_koutu = self.tune_hsv_threshold(frame_koutu)  # 若触发相机位传感器下降沿则调色
+                
+                # 使用改进的HSV均值计算方法（原cutoff_img的逻辑）
+                gray_image = cv2.cvtColor(frame_koutu, cv2.COLOR_BGR2GRAY)
+                _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                masked_image = cv2.bitwise_and(frame_koutu, frame_koutu, mask=binary)
+                non_zero_pixels = masked_image[binary > 0]
+                
+                # 计算HSV平均值
+                if len(non_zero_pixels) > 0:
+                    hsv_pixels = cv2.cvtColor(non_zero_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2HSV)
+                    self.average_hsv = np.mean(hsv_pixels, axis=0).flatten()
+                else:
+                    self.average_hsv = np.array([0, 0, 0])  # 默认值
+                
+                self.show_fix_img(frame_koutu)
 
-                self.show_orin_img(self,frame)#在Qt上显示原图
-                frame_koutu = self.cut_img(frame)#裁剪图片
-
-                #判断下降沿与上升沿
-                if  self.mbus.trig_status[0]==1 :
-
-                    frame_koutu=self.tune_hsv_threshold(frame_koutu)#若触发相机位传感器下降沿则调色
-                    #TODO： 每次都需要手动调，后续应该在QT中实现，每次都用滑槽的值做，而不是更新滑槽控件
-                    #在此处更新了self.average_hsv，现在的抠图算法，手动识别
-                    #frame_koutu=self.cutoff_img(frame_koutu)
-                    #在此处更新了self.average_hsv，原本的抠图算法，自动识别
-                    #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
-                    #print(self.average_hsv.tolist())
-
-                    self.show_fix_img(frame_koutu)
-                    self.worker[1]=self.average_hsv.tolist()
+                # 判断下降沿与上升沿
+                if self.mbus.trig_status[0] == 1:
+                    self.worker[1] = self.average_hsv.tolist()
 
                 for i in range(5):
                     try:
-                        print("workers",self.worker)
-                        b=i+1
-                        if  self.mbus.trig_status[b]==1  :
-                            print("worker:",self.worker[b])
-                            print("index :",b)
-                        
-                            if self.hsv_in_range(self.worker[b],color_ranges[i][0],color_ranges[i][1]):
-                                self.trig_pusher(i)#推杆推出，信号变化
-                                # self.t_put[i] = time.time()#记录推杆推出的时间
-                                # self.mbus.coils[i] = 1 #记录线圈变化状态
-
-
-
-                        if  self.mbus.trig_status[b]==2  :
-                            self.worker[b+1]=self.worker[b]
+                        b = i + 1
+                        if self.mbus.trig_status[b] == 1:
+                            print("worker:", self.worker[b])
+                            print("index:", b)
+                            
+                            if self.hsv_in_range(self.worker[b], color_ranges[i][0], color_ranges[i][1]):
+                                self.trig_pusher(i)  # 推杆推出，信号变化
+                        if self.mbus.trig_status[b] == 2:
+                            self.worker[b+1] = self.worker[b]
                             self.worker[b] = []
                     except:
                         continue
-
     def cut_img(self,frame):
         #koutu  zai koutu_img  shang xianshi 
         # 定义裁剪区域
@@ -606,6 +704,8 @@ class Dialog(QDialog,Ui_Dialog):
         # 将 BGR 转换为 RGB
         rgb_image = cv2.cvtColor(frame_orin, cv2.COLOR_BGR2RGB)
         
+        
+        print("Top-left pixel (B,G,R):", rgb_image[0, 0])  # OpenCV默认是BGR
         len_x = rgb_image.shape[1]  # 获取图像宽度
         wid_y = rgb_image.shape[0]  # 获取图像高度
         
@@ -615,16 +715,22 @@ class Dialog(QDialog,Ui_Dialog):
         pix = pix.scaledToWidth(345)
         self.img_orign.setPixmap(pix)  # 在label上显示图片
 
-    def show_fix_img(self,frame_koutu):
+    def show_fix_img(self,frame_fix):
         """
         在text_hsv上显示图片
         """
-        len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
-        wid_koutu_y = frame_koutu.shape[0]
-        frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-        pix_koutu = QPixmap.fromImage(frame_koutu)   
+        rgb_image = cv2.cvtColor(frame_fix, cv2.COLOR_BGR2RGB)
+        
+        len_x = rgb_image.shape[1]  # 获取图像宽度
+        wid_y = rgb_image.shape[0]  # 获取图像高度
+        
+        # 创建 QImage，使用 RGB888 格式
+        frame = QImage(rgb_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)
+        #frame_fix = QImage(frame_fix.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+        pix_koutu = QPixmap.fromImage(frame)   
         pix_koutu = pix_koutu.scaledToWidth(345)
 
+        print(self.average_hsv)
         self.txt_hsv.setPlainText(str(self.average_hsv))
         self.koutu_img.setPixmap (pix_koutu)  
         # # 在label上显示图片,koutu_img函数是返回
@@ -637,11 +743,6 @@ class Dialog(QDialog,Ui_Dialog):
             lower[2] <= average[2] <= upper[2]):
             return True
         return False # 如果没有匹配的颜色范围，返回 None
-
-
-               
-
-
 
 
               #jisuan pingjun hsv 
@@ -689,7 +790,6 @@ class Dialog(QDialog,Ui_Dialog):
 
         vis = cv2.bitwise_and(img, img, mask=mask)
             
-        self.show_fix_img(vis)
             # cv2.imshow('vis', vis)
             # cv2.imshow('mask',mask)
             # QApplication.processEvents()
@@ -1045,14 +1145,49 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.setItem(row, 2, QTableWidgetItem(cfg_beizhu))
 
     def update_HSV_values(self):
+        # 1. 读取滑条值
         self.hmin = self.Hmin_slider.value()
         self.hmax = self.Hmax_slider.value()
         self.smin = self.Smin_slider.value()
         self.smax = self.Smax_slider.value()
         self.vmin = self.Vmin_slider.value()
         self.vmax = self.Vmax_slider.value()
-        self.range ="H="+str(self.hmin)+":"+str(self.hmax)+"\nS="+str(self.smin)+":"+str(self.smax)+"\nV="+str(self.vmin)+":"+str(self.vmax)
-        self.txt_hsv_2.setPlainText(self.range)
+
+        # 2. 写入 yuzhi.ini
+        import configparser
+        cfg = configparser.ConfigParser()
+        cfg['HSV'] = {
+            'hmin': str(self.hmin),
+            'hmax': str(self.hmax),
+            'smin': str(self.smin),
+            'smax': str(self.smax),
+            'vmin': str(self.vmin),
+            'vmax': str(self.vmax)
+        }
+        with open('yuzhi.ini', 'w', encoding='utf-8') as f:
+            cfg.write(f)
+    def load_HSV_from_ini(self):
+        import configparser
+        cfg = configparser.ConfigParser()
+        try:
+            cfg.read('yuzhi.ini', encoding='utf-8')
+
+            # 读取并转换成 int，再设置到滑条
+            self.Hmin_slider.setValue(int(cfg['HSV']['hmin']))
+            self.Hmax_slider.setValue(int(cfg['HSV']['hmax']))
+            self.Smin_slider.setValue(int(cfg['HSV']['smin']))
+            self.Smax_slider.setValue(int(cfg['HSV']['smax']))
+            self.Vmin_slider.setValue(int(cfg['HSV']['vmin']))
+            self.Vmax_slider.setValue(int(cfg['HSV']['vmax']))
+        except (FileNotFoundError, KeyError, ValueError):
+            # 文件不存在或字段缺失时使用默认值
+            self.Hmin_slider.setValue(0)
+            self.Hmax_slider.setValue(179)
+            self.Smin_slider.setValue(0)
+            self.Smax_slider.setValue(255)
+            self.Vmin_slider.setValue(0)
+            self.Vmax_slider.setValue(255)
+
 
 
 def main():

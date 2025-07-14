@@ -115,10 +115,10 @@
       <widget class="QTextEdit" name="txt_hsv">
        <property name="geometry">
         <rect>
-         <x>1030</x>
+         <x>850</x>
          <y>490</y>
-         <width>371</width>
-         <height>101</height>
+         <width>551</width>
+         <height>171</height>
         </rect>
        </property>
        <property name="sizePolicy">
