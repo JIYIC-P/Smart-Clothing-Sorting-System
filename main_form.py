@@ -110,9 +110,12 @@ class Dialog(QDialog,Ui_Dialog):
         self.timer=QTimer()
         self.timer.timeout.connect(self.show_time)
         self.timer.start(100)
+
         self.t_YoLo=QTimer()
-        self.t_YoLo.timeout.connect(self.show_img)
+        #self.t_YoLo.timeout.connect(self.show_img)
+        self.t_YoLo.timeout.connect(self.update)
         self.t_YoLo.start(100)
+
         self.t_back=QTimer()
         self.t_back.timeout.connect(self.back)
         self.t_back.start(100)
@@ -126,47 +129,17 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_output = []
         self.btn_input = []
         self.pushButton.clicked.connect(self.serial_connect)
-        self.btn_motor_init()
+        self.btn_output_init()
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
         self.read_color_ini()
-        #self.update_all_fonts()
-        # 在 Ui_init 或 setupUi 后添加
-        #self.label_2.setAlignment(Qt.AlignCenter)
-    def tune_hsv_threshold(self,img):
-    # """
-    # 调整HSV阈值并返回处理后的图像
-    # """
-        #img = cv2.imread(path)
-        if img is None:
-            raise FileNotFoundError('图片没找到')
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        
 
-        cv2.namedWindow('Tune')
-        for ch in ['H', 'S', 'V']:
-            for rng in ['min', 'max']:
-                default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
-                cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
-                                {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
 
-        while True:
-            hmin = cv2.getTrackbarPos('Hmin', 'Tune')
-            smin = cv2.getTrackbarPos('Smin', 'Tune')
-            vmin = cv2.getTrackbarPos('Vmin', 'Tune')
-            hmax = cv2.getTrackbarPos('Hmax', 'Tune')
-            smax = cv2.getTrackbarPos('Smax', 'Tune')
-            vmax = cv2.getTrackbarPos('Vmax', 'Tune')
+    
+            
 
-            mask = cv2.inRange(hsv, (hmin, smin, vmin), (hmax, smax, vmax))
-            mask = cv2.bitwise_not(mask)  # 1=衣物区域
-            vis = cv2.bitwise_and(img, img, mask=mask)
-
-            cv2.imshow('mask', mask)
-            cv2.imshow('result', vis)
-            if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
-                cv2.destroyAllWindows()
-                return vis  # 返回处理后的图像
     @pyqtSlot()
     def on_applay_clicked(self):
         global color_ranges  # 声明使用全局变量
@@ -189,11 +162,11 @@ class Dialog(QDialog,Ui_Dialog):
 
         # 调试打印
         print("已重新加载 color_ranges:", color_ranges)
-       
+
+
     def resizeEvent(self, event):
         self.update_all_fonts()
         super().resizeEvent(event)
-
 
 
     def update_all_fonts(self):
@@ -206,40 +179,6 @@ class Dialog(QDialog,Ui_Dialog):
         # 只想让表格内容和表头都变大，可以单独设置
         self.tableWidget.setFont(font)
         self.tableWidget.horizontalHeader().setFont(font)
-
-
-
-    def retranslateUixxxxx(self, Dialog):
-        _translate = QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.label_2.setText(_translate("Dialog", "img"))
-        self.btn_start.setText(_translate("Dialog", "开始"))
-        self.btn_reset.setText(_translate("Dialog", "重置"))
-        self.comboBox_mode.setItemText(0, _translate("Dialog", "白浅深"))
-        self.comboBox_mode.setItemText(1, _translate("Dialog", "颜色"))
-        self.comboBox_mode.setItemText(2, _translate("Dialog", "形状"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Dialog", "Tab 1"))
-        self.groupBox_output.setTitle(_translate("Dialog", "GroupBox"))
-        self.groupBox_input.setTitle(_translate("Dialog", "GroupBox"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("Dialog", "Tab 2"))
-        self.btn_load.setText(_translate("Dialog", "加载设置"))
-        self.btn_add.setText(_translate("Dialog", "添加一行"))
-        self.btn_apply.setText(_translate("Dialog", "应用"))
-        self.label_1.setText(_translate("Dialog", "波特率"))
-        self.label.setText(_translate("Dialog", "串口选择"))
-        self.Light.setText(_translate("Dialog", "TextLabel"))
-        self.pushButton.setText(_translate("Dialog", "连接"))
-        self.comboBox_2.setItemText(0, _translate("Dialog", "38400"))
-        self.comboBox_1.setItemText(0, _translate("Dialog", "COM3"))
-        self.comboBox_1.setItemText(1, _translate("Dialog", "COM4"))
-        self.comboBox_1.setItemText(2, _translate("Dialog", "COM1"))
-        self.comboBox_1.setItemText(3, _translate("Dialog", "COM2"))
-        self.comboBox_1.setItemText(4, _translate("Dialog", "COM5"))
-        self.comboBox_1.setItemText(5, _translate("Dialog", "COM6"))
-        self.comboBox_1.setItemText(6, _translate("Dialog", "COM7"))
-        self.comboBox_1.setItemText(7, _translate("Dialog", "COM8"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Dialog", "Tab3"))
-
 
 
     def init_sys_tble(self):
@@ -283,6 +222,7 @@ class Dialog(QDialog,Ui_Dialog):
             self.tableWidget.setHorizontalHeaderItem(col, item)
         
         self.on_btn_load_clicked()
+
 
     def btn_input_init(self):
         # 1. 创建主水平布局（用于放置4组垂直布局）
@@ -344,8 +284,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.groupBox_input.setLayout(grid)
 
 
-
-    def btn_motor_init(self):
+    def btn_output_init(self):
         # 1. 创建水平布局 hbox 并添加按钮
         hbox = QHBoxLayout()
         hbox.setSpacing(300)  # 按钮之间的固定间距（可根据需要调整）
@@ -397,7 +336,7 @@ class Dialog(QDialog,Ui_Dialog):
         
         # 连接按钮点击信号
         for each in self.btn_output:
-            each.clicked.connect(lambda: self.btn_out_clicked(self.sender()))
+            each.clicked.connect(lambda: self.btn_output_clicked(self.sender()))
 
 
 
@@ -454,6 +393,7 @@ class Dialog(QDialog,Ui_Dialog):
                     self.btn_input[text].setStyleSheet("background-color:red")
                 text += 1  
 
+
     @pyqtSlot()
     def on_btn1_clicked(self):
           self.trig_pusher( 1)
@@ -488,7 +428,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     @pyqtSlot()
-    def btn_out_clicked(self, btn):
+    def btn_output_clicked(self, btn):
         if not self.mbus.isopend:
             QMessageBox.warning(self, "提示", "未连接串口")
         else:
@@ -514,6 +454,7 @@ class Dialog(QDialog,Ui_Dialog):
                 QMessageBox.warning(self, f"提示", "未提前设置串口，已自动连接{text}")
             else :
                 QMessageBox.warning(self, f"错误", "未提前设置串口，自动连接{text}失败")
+
 
     def read_color_ini(self):
          # 读取 color.ini 并还原 color_ranges
@@ -546,7 +487,7 @@ class Dialog(QDialog,Ui_Dialog):
                     signal = True
             if signal :
                 self.mbus.VALUES[0] = 0
-                self.btn_out_clicked(self.btn_output[0])
+                self.btn_output_clicked(self.btn_output[0])
 
 
 
@@ -559,7 +500,6 @@ class Dialog(QDialog,Ui_Dialog):
                 len_x = frame.shape[1]  # 获取图像大小
                 wid_y = frame.shape[0]
                 frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                
                 pix = QPixmap.fromImage(frame11)   
                 pix = pix.scaledToWidth(345)
                 self.img_orign.setPixmap (pix)  # 在label上显示图片
@@ -577,20 +517,32 @@ class Dialog(QDialog,Ui_Dialog):
                 # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
                 frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
 
-                 
-                frame_koutu=self.tune_hsv_threshold(frame_koutu)#在此处更新了self.average_hsv
+
+                #frame_koutu=self.tune_hsv_threshold(frame_koutu)
+                #在此处更新了self.average_hsv，现在的抠图算法，手动识别
+
+                frame_koutu=self.cutoff_img(frame_koutu)
+                #在此处更新了self.average_hsv，原本的抠图算法，自动识别
+
+
                 len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
                 wid_koutu_y = frame_koutu.shape[0]
                 frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                  
                 pix_koutu = QPixmap.fromImage(frame_koutu)   
                 pix_koutu = pix_koutu.scaledToWidth(345)
-                self.koutu_img.setPixmap (pix_koutu)  # 在label上显示图片
                 self.txt_hsv.setPlainText(str(self.average_hsv))
+                self.koutu_img.setPixmap (pix_koutu)  
+                # # 在label上显示图片,koutu_img函数是返回
+
+                #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
+
                 #return
+
+                #判断下降沿与上升沿
                 if  self.mbus.trig_status[0]==1 :
                     #print(self.average_hsv.tolist())e
                     self.worker[1]=self.average_hsv.tolist()
+
                 for i in range(5):
                     try:
                         print("workers",self.worker)
@@ -611,6 +563,80 @@ class Dialog(QDialog,Ui_Dialog):
                             self.worker[b] = []
                     except:
                         continue
+
+
+    @pyqtSlot()
+    def update(self):
+        if self.mode is not None:
+            frame = self.streamer.grab_frame() 
+            if frame is not None:
+
+                len_x = frame.shape[1]  # 获取图像大小
+                wid_y = frame.shape[0]
+                frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                pix = QPixmap.fromImage(frame11)   
+                pix = pix.scaledToWidth(345)
+                self.img_orign.setPixmap (pix)  # 在label上显示图片
+
+                #koutu  zai koutu_img  shang xianshi 
+                # 定义裁剪区域
+                # 格式：[起始x坐标, 起始y坐标, 宽度, 高度]
+                # 注意：坐标从左上角开始，x向右增加，y向下增加
+                crop_x = 100  # 起始x坐标
+                crop_y = 0   # 起始y坐标
+                crop_width = 500  # 裁剪宽度
+                crop_height = 400  # 裁剪高度
+
+                # 裁剪图片
+                # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
+                frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
+
+
+                #判断下降沿与上升沿
+                if  self.mbus.trig_status[0]==1 :
+                    frame_koutu=self.tune_hsv_threshold(frame_koutu)
+                    #在此处更新了self.average_hsv，现在的抠图算法，手动识别
+                    #frame_koutu=self.cutoff_img(frame_koutu)
+                    #在此处更新了self.average_hsv，原本的抠图算法，自动识别
+                    #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
+                    #print(self.average_hsv.tolist())e
+                    self.show_fix_img(frame_koutu)
+                    self.worker[1]=self.average_hsv.tolist()
+
+                for i in range(5):
+                    try:
+                        print("workers",self.worker)
+                        b=i+1
+                        if  self.mbus.trig_status[b]==1  :
+                            print("worker:",self.worker[b])
+                            print("index :",b)
+                        
+                            if self.hsv_in_range(self.worker[b],color_ranges[i][0],color_ranges[i][1]):
+                                self.trig_pusher(i)#推杆推出，信号变化
+                                # self.t_put[i] = time.time()#记录推杆推出的时间
+                                # self.mbus.coils[i] = 1 #记录线圈变化状态
+
+
+
+                        if  self.mbus.trig_status[b]==2  :
+                            self.worker[b+1]=self.worker[b]
+                            self.worker[b] = []
+                    except:
+                        continue
+
+    def show_fix_img(self,frame_koutu):
+        """
+        在text_hsv上显示图片
+        """
+        len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
+        wid_koutu_y = frame_koutu.shape[0]
+        frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+        pix_koutu = QPixmap.fromImage(frame_koutu)   
+        pix_koutu = pix_koutu.scaledToWidth(345)
+        self.txt_hsv.setPlainText(str(self.average_hsv))
+        self.koutu_img.setPixmap (pix_koutu)  
+        # # 在label上显示图片,koutu_img函数是返回
+
     def hsv_in_range(self, average,lower,upper):
         print("average111：",average,len(average))
 
@@ -642,6 +668,42 @@ class Dialog(QDialog,Ui_Dialog):
         #koutu deidao  img_koutu
 
 
+    def tune_hsv_threshold(self,img):
+        """
+        手动调整HSV阈值并返回处理后的图像
+        """
+        #img = cv2.imread(path)
+        if img is None:
+            raise FileNotFoundError('图片没找到')
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        cv2.namedWindow('Tune')
+        for ch in ['H', 'S', 'V']:
+            for rng in ['min', 'max']:
+                default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
+                cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
+                                {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
+
+        while True:
+            hmin = cv2.getTrackbarPos('Hmin', 'Tune')
+            smin = cv2.getTrackbarPos('Smin', 'Tune')
+            vmin = cv2.getTrackbarPos('Vmin', 'Tune')
+            hmax = cv2.getTrackbarPos('Hmax', 'Tune')
+            smax = cv2.getTrackbarPos('Smax', 'Tune')
+            vmax = cv2.getTrackbarPos('Vmax', 'Tune')
+
+            mask = cv2.inRange(hsv, (hmin, smin, vmin), (hmax, smax, vmax))
+            mask = cv2.bitwise_not(mask)  # 1=衣物区域
+            vis = cv2.bitwise_and(img, img, mask=mask)
+
+            cv2.imshow('mask', mask)
+            cv2.imshow('result', vis)
+            if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
+                self.average_hsv = np.mean(vis, axis=0)
+                print("hmin:",hmin,"smin:",smin,"vmin:",vmin,"hmax:",hmax,"sman:",smax,"vmax:",vmax)
+                cv2.destroyAllWindows()
+                return vis  # 返回处理后的图像
+
 
     def cutoff_img(self,img):
         # 读取灰度图
@@ -657,30 +719,30 @@ class Dialog(QDialog,Ui_Dialog):
         return  masked_image
         
          
-#233 22 79
-
-#103148 154
-    def calculate_center_hsv(image, roi_size=200):
-        """
-        计算图像中心区域的HSV平均值
-        :param image: 输入图像（BGR格式）
-        :param roi_size: 中心区域大小（默认100x100像素）
-        :return: 平均HSV值（H, S, V）
-        """
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) 
-        height, width = image.shape[:2]
-        center_x, center_y = width // 2, height // 2
-        roi = hsv[
-            center_y - roi_size // 2 : center_y + roi_size // 2,
-            center_x - roi_size // 2 : center_x + roi_size // 2
-        ]
-        avg_hsv = np.mean(roi, axis=(0, 1))
-        return avg_hsv
+    # def calculate_center_hsv(image, roi_size=200):
+    #     """
+    #     计算图像中心区域的HSV平均值
+    #     :param image: 输入图像（BGR格式）
+    #     :param roi_size: 中心区域大小（默认100x100像素）
+    #     :return: 平均HSV值（H, S, V）
+    #     """
+    #     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) 
+    #     height, width = image.shape[:2]
+    #     center_x, center_y = width // 2, height // 2
+    #     roi = hsv[
+    #         center_y - roi_size // 2 : center_y + roi_size // 2,
+    #         center_x - roi_size // 2 : center_x + roi_size // 2
+    #     ]
+    #     avg_hsv = np.mean(roi, axis=(0, 1))
+    #     return avg_hsv
 
 
-
-
-
+    # def koutu_img(self,frame):
+        
+    #     if frame is None:
+    #         time.sleep(0.1)
+    #         self.calculate_center_hsv()
+    #         return
 
     def match_shape(self,frame):
         img_yolo = self.model(frame, verbose=False)
@@ -700,14 +762,6 @@ class Dialog(QDialog,Ui_Dialog):
        
 
 
-
-
-    def koutu_img(self,frame):
-        
-        if frame is None:
-            time.sleep(0.1)
-            self.calculate_center_hsv()
-            return
                 
 
 
