@@ -138,7 +138,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
-        self.read_color_ini()
+        self.read_colors()
         
         self.Hmin_slider.setRange(0, 179)
         self.Hmin_slider.setValue(0)
@@ -160,7 +160,6 @@ class Dialog(QDialog,Ui_Dialog):
         self.Vmax_slider.setValue(255)
         self.Vmin_slider.valueChanged.connect(self.update_HSV_values)
         self.Vmax_slider.valueChanged.connect(self.update_HSV_values)
-        self.load_HSV_from_ini()
         self.update_HSV_values()
             
 
@@ -191,14 +190,14 @@ class Dialog(QDialog,Ui_Dialog):
     #    print("已重新加载 color_ranges:", color_ranges)
 
     @pyqtSlot()
-    def on_applay_clicked(self):
+    def on_btn_save_colors_clicked(self):
         global color_ranges  # 声明使用全局变量
         
         # 1. 获取当前颜色范围和阈值
         range_col = self.average_hsv.tolist()
         uper_num = 30  # self.uper.toPlainText()
         down_num = 30  # self.downer.toPlainText()
-        index = self.choice_push.currentIndex()
+        index = self.comBox_pusher.currentIndex()
         print(index)
         
         # 2. 更新颜色范围
@@ -209,13 +208,13 @@ class Dialog(QDialog,Ui_Dialog):
         print("更新后的color_ranges:", color_ranges)
         
         # 3. 写入配置文件
-        self.save_color_ranges_to_ini()
+        self.save_color()
         
         # 4. 重新读取验证（可选）
-        self.load_color_ranges_from_ini()
+        self.load_color()
         print("重新加载后的color_ranges:", color_ranges)
 
-    def save_color_ranges_to_ini(self):
+    def save_color(self):
         """将color_ranges保存到color.ini文件"""
         cfg = configparser.ConfigParser()
         
@@ -233,7 +232,7 @@ class Dialog(QDialog,Ui_Dialog):
         
         print("颜色范围已保存到color.ini")
 
-    def load_color_ranges_from_ini(self):
+    def load_color(self):
         """从color.ini加载color_ranges"""
         global color_ranges
         
@@ -248,6 +247,8 @@ class Dialog(QDialog,Ui_Dialog):
         else:
             print("警告: color.ini中没有找到COLOR_RANGES配置")
             color_ranges = {}  # 默认值
+
+
     def resizeEvent(self, event):
             self.update_all_fonts()
             super().resizeEvent(event)
@@ -484,6 +485,7 @@ class Dialog(QDialog,Ui_Dialog):
         print("btn_start do")
         #print(self.width(),self.height())
         #开始运行识别
+        self.load_HSV_ranges()
         self.mode = self.comboBox_mode.currentText()
         if self.mode == "形状":
             self.model = YOLO("yolov8n.pt")
@@ -496,7 +498,7 @@ class Dialog(QDialog,Ui_Dialog):
                 QMessageBox.warning(self, f"错误", "未提前设置串口，自动连接{text}失败")
 
 
-    def read_color_ini(self):
+    def read_colors(self):
          # 读取 color.ini 并还原 color_ranges
         cfg = configparser.ConfigParser()
         cfg.read('color.ini', encoding='utf-8')
@@ -513,7 +515,7 @@ class Dialog(QDialog,Ui_Dialog):
     def on_btn_reset_clicked(self):
         print("btn_reset do")
         
-        self.read_color_ini()
+        self.read_colors()
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
@@ -531,8 +533,8 @@ class Dialog(QDialog,Ui_Dialog):
 
 
 
-    @pyqtSlot()
-    def show_img(self):
+    # @pyqtSlot()
+    # def show_img(self):
         if self.mode is not None:
             frame = self.streamer.grab_frame() 
             if frame is not None:
@@ -643,6 +645,8 @@ class Dialog(QDialog,Ui_Dialog):
     #                         self.worker[b] = []
     #                 except:
     #                     continue
+
+
     @pyqtSlot()
     def update(self):
         if self.mode is not None:
@@ -650,27 +654,14 @@ class Dialog(QDialog,Ui_Dialog):
             if frame is not None:
                 self.show_orin_img(frame)  # 在Qt上显示原图
                 frame_koutu = self.cut_img(frame)  # 裁剪图片
-                frame_koutu = self.tune_hsv_threshold(frame_koutu)  # 若触发相机位传感器下降沿则调色
+                frame_koutu = self.tune_hsv_threshold(frame_koutu)  # 切图
                 
-                # 使用改进的HSV均值计算方法（原cutoff_img的逻辑）
-                gray_image = cv2.cvtColor(frame_koutu, cv2.COLOR_BGR2GRAY)
-                _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                masked_image = cv2.bitwise_and(frame_koutu, frame_koutu, mask=binary)
-                non_zero_pixels = masked_image[binary > 0]
-                
-                # 计算HSV平均值
-                if len(non_zero_pixels) > 0:
-                    hsv_pixels = cv2.cvtColor(non_zero_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2HSV)
-                    self.average_hsv = np.mean(hsv_pixels, axis=0).flatten()
-                else:
-                    self.average_hsv = np.array([0, 0, 0])  # 默认值
-                
-                self.show_fix_img(frame_koutu)
+                self.calculate_ave_hsv(frame_koutu) # 计算平均值
+                self.show_fix_img(frame_koutu) # 在Qt上显示切完的图
 
                 # 判断下降沿与上升沿
                 if self.mbus.trig_status[0] == 1:
                     self.worker[1] = self.average_hsv.tolist()
-
                 for i in range(5):
                     try:
                         b = i + 1
@@ -685,6 +676,24 @@ class Dialog(QDialog,Ui_Dialog):
                             self.worker[b] = []
                     except:
                         continue
+
+
+    def calculate_ave_hsv(self,frame_koutu):
+        # 使用改进的HSV均值计算方法（原cutoff_img的逻辑）
+        gray_image = cv2.cvtColor(frame_koutu, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        masked_image = cv2.bitwise_and(frame_koutu, frame_koutu, mask=binary)
+        non_zero_pixels = masked_image[binary > 0]
+                
+        # 计算HSV平均值
+        if len(non_zero_pixels) > 0:
+            hsv_pixels = cv2.cvtColor(non_zero_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2HSV)
+            self.average_hsv = np.mean(hsv_pixels, axis=0).flatten()
+        else:
+            self.average_hsv = np.array([0, 0, 0])  # 默认值
+                
+
+
     def cut_img(self,frame):
         #koutu  zai koutu_img  shang xianshi 
         # 定义裁剪区域
@@ -700,12 +709,11 @@ class Dialog(QDialog,Ui_Dialog):
         return frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
         
 
+
+
     def show_orin_img(self, frame_orin):
         # 将 BGR 转换为 RGB
         rgb_image = cv2.cvtColor(frame_orin, cv2.COLOR_BGR2RGB)
-        
-        
-        print("Top-left pixel (B,G,R):", rgb_image[0, 0])  # OpenCV默认是BGR
         len_x = rgb_image.shape[1]  # 获取图像宽度
         wid_y = rgb_image.shape[0]  # 获取图像高度
         
@@ -715,12 +723,12 @@ class Dialog(QDialog,Ui_Dialog):
         pix = pix.scaledToWidth(345)
         self.img_orign.setPixmap(pix)  # 在label上显示图片
 
+
     def show_fix_img(self,frame_fix):
         """
         在text_hsv上显示图片
         """
         rgb_image = cv2.cvtColor(frame_fix, cv2.COLOR_BGR2RGB)
-        
         len_x = rgb_image.shape[1]  # 获取图像宽度
         wid_y = rgb_image.shape[0]  # 获取图像高度
         
@@ -730,10 +738,11 @@ class Dialog(QDialog,Ui_Dialog):
         pix_koutu = QPixmap.fromImage(frame)   
         pix_koutu = pix_koutu.scaledToWidth(345)
 
-        print(self.average_hsv)
+        #print(self.average_hsv)
         self.txt_hsv.setPlainText(str(self.average_hsv))
         self.koutu_img.setPixmap (pix_koutu)  
         # # 在label上显示图片,koutu_img函数是返回
+
 
     def hsv_in_range(self, average,lower,upper):
         print("average111：",average,len(average))
@@ -769,77 +778,25 @@ class Dialog(QDialog,Ui_Dialog):
         if img is None:
             raise FileNotFoundError('图片没找到')
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-        #cv2.namedWindow('Tune')
-        # for ch in ['H', 'S', 'V']:
-        #     for rng in ['min', 'max']:
-        #         default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
-                # cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
-                #                 {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
-
-        #while True:
-            # self.hmin = cv2.getTrackbarPos('Hmin', 'Tune')
-            # self.smin = cv2.getTrackbarPos('Smin', 'Tune')
-            # self.vmin = cv2.getTrackbarPos('Vmin', 'Tune')
-            # self.hmax = cv2.getTrackbarPos('Hmax', 'Tune')
-            # self.smax = cv2.getTrackbarPos('Smax', 'Tune')
-            # self.vmax = cv2.getTrackbarPos('Vmax', 'Tune')
-
         mask = cv2.inRange(hsv, (self.hmin, self.smin, self.vmin), (self.hmax, self.smax, self.vmax))
         mask = cv2.bitwise_not(mask)  # 1=衣物区域
-
         vis = cv2.bitwise_and(img, img, mask=mask)
-            
-            # cv2.imshow('vis', vis)
-            # cv2.imshow('mask',mask)
-            # QApplication.processEvents()
-            # if hasattr(self, 'key_pressed') and self.key_pressed == Qt.Key.Key_CapsLock:
-            #     self.average_hsv = np.mean(vis, axis=0)
-            #     delattr(self, 'key_pressed')  # 清除按键状态
         return vis  # 返回处理后的图像
-            # if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
-            #     self.average_hsv = np.mean(vis, axis=0)
-            #     return vis  # 返回处理后的图像
 
 
-    def cutoff_img(self,img):
-        # 读取灰度图
-        #img = cv2.imread('333.jpg', 0)
-        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # Otsu自动阈值分割
-        _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        masked_image = cv2.bitwise_and(img, img, mask=binary)
-        non_zero_pixels = masked_image[binary > 0]
+    # def cutoff_img(self,img):
+    #     # 读取灰度图
+    #     #img = cv2.imread('333.jpg', 0)
+    #     gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #     # Otsu自动阈值分割
+    #     _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    #     masked_image = cv2.bitwise_and(img, img, mask=binary)
+    #     non_zero_pixels = masked_image[binary > 0]
 
-        # 计算平均值
-        self.average_hsv = np.mean(non_zero_pixels, axis=0)
-        return  masked_image
+    #     # 计算平均值
+    #     self.average_hsv = np.mean(non_zero_pixels, axis=0)
+    #     return  masked_image
         
-         
-    # def calculate_center_hsv(image, roi_size=200):
-    #     """
-    #     计算图像中心区域的HSV平均值
-    #     :param image: 输入图像（BGR格式）
-    #     :param roi_size: 中心区域大小（默认100x100像素）
-    #     :return: 平均HSV值（H, S, V）
-    #     """
-    #     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) 
-    #     height, width = image.shape[:2]
-    #     center_x, center_y = width // 2, height // 2
-    #     roi = hsv[
-    #         center_y - roi_size // 2 : center_y + roi_size // 2,
-    #         center_x - roi_size // 2 : center_x + roi_size // 2
-    #     ]
-    #     avg_hsv = np.mean(roi, axis=(0, 1))
-    #     return avg_hsv
-
-
-    # def koutu_img(self,frame):
-        
-    #     if frame is None:
-    #         time.sleep(0.1)
-    #         self.calculate_center_hsv()
-    #         return
 
     def match_shape(self,frame):
         img_yolo = self.model(frame, verbose=False)
@@ -857,73 +814,6 @@ class Dialog(QDialog,Ui_Dialog):
 
         frame = img_yolo[0].plot()    
        
-
-
-                
-
-
-       
-
-
-    # def guolv(self,hsv,s,v):
-
-    #     # 定义要过滤的颜色范围（示例：过滤掉红色范围）
-    #     # 红色在HSV中的色调值通常在0-10和160-180之间
-    #     lower_trans1 = np.array([45, 50, 50])
-    #     upper_trans1 = np.array([90, 255, 255])
-    #     lower_trans2 = np.array([160, 50, 50])
-    #     upper_trans2 = np.array([180, 255, 255])
-
-    #     # 创建红色掩膜
-    #     red_mask1 = cv2.inRange(hsv, lower_trans1, upper_trans1)
-    #     red_mask2 = cv2.inRange(hsv, lower_trans2, upper_trans2)
-    #     red_mask = cv2.bitwise_or(red_mask1, red_mask2)
-
-    #     # 反转掩膜，得到非红色区域
-    #     non_trans_mask = cv2.bitwise_not(red_mask)
-
-    #     # 应用过滤掩膜到各通道
-    #     s_filtered = cv2.bitwise_and(s, s, mask=non_trans_mask)
-    #     v_filtered = cv2.bitwise_and(v, v, mask=non_trans_mask)
-
-    #     # 分类掩膜（使用过滤后的通道）
-    #     white_mask = (s_filtered < s_low) & (v_filtered > 200)      # 白色：低饱和度 + 高明度
-    #     light_mask = (s_filtered >= s_low) & (s_filtered < s_high)  # 浅色：中等饱和度
-    #     dark_mask = (s_filtered >= s_high) | (v_filtered < v_low)   # 深色：高饱和度 或 低明度
-
-    #     # 统计各类像素数量
-    #     results = {
-    #         1: cv2.countNonZero(white_mask.astype(np.uint8)),  # 大白
-    #         2: cv2.countNonZero(light_mask.astype(np.uint8)),  # 二白
-    #         3: cv2.countNonZero(dark_mask.astype(np.uint8))    # 其他
-    #     }
-
-
-    #     # 分类掩膜
-    #     white_mask = (s < s_low) & (v > 200)      # 白色：低饱和度 + 高明度
-    #     light_mask = (s >= s_low) & (s < s_high)  # 浅色：中等饱和度
-    #     dark_mask = (s >= s_high) | (v < v_low)   # 深色：高饱和度 或 低明度
-
-    #     # 统计各类像素数量
-    #     results1 = {
-    #         1: cv2.countNonZero(white_mask.astype(np.uint8)),#大白
-    #         2: cv2.countNonZero(light_mask.astype(np.uint8)),#二白
-    #         3: cv2.countNonZero(dark_mask.astype(np.uint8))#其他
-    #     }
-    #     print("before:",results1)
-    #     print("after :",results)
-    #     #self.control(results)
-
-
-
-    # def control(self,results):
-    #     # 0号传感器下降沿触发
-    #     if self.mbus.trig_status[0] == 1:
-    #         if results:
-    #             dominant_category = max(results, key=results.get)
-    #             self.cloth.append(dominant_category)  # 添加到列表
-    #         else:
-    #             dominant_category = None  # 无分类结果
 
 
 
@@ -1144,6 +1034,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.setItem(row, 1, QTableWidgetItem(cfg_dat))
         self.tableWidget.setItem(row, 2, QTableWidgetItem(cfg_beizhu))
 
+
     def update_HSV_values(self):
         # 1. 读取滑条值
         self.hmin = self.Hmin_slider.value()
@@ -1152,9 +1043,9 @@ class Dialog(QDialog,Ui_Dialog):
         self.smax = self.Smax_slider.value()
         self.vmin = self.Vmin_slider.value()
         self.vmax = self.Vmax_slider.value()
+        
 
-        # 2. 写入 yuzhi.ini
-        import configparser
+    def save_HSV_ranges(self):
         cfg = configparser.ConfigParser()
         cfg['HSV'] = {
             'hmin': str(self.hmin),
@@ -1164,13 +1055,15 @@ class Dialog(QDialog,Ui_Dialog):
             'vmin': str(self.vmin),
             'vmax': str(self.vmax)
         }
-        with open('yuzhi.ini', 'w', encoding='utf-8') as f:
+        with open('ranges.ini', 'w', encoding='utf-8') as f:
             cfg.write(f)
-    def load_HSV_from_ini(self):
+
+
+    def load_HSV_ranges(self):
         import configparser
         cfg = configparser.ConfigParser()
         try:
-            cfg.read('yuzhi.ini', encoding='utf-8')
+            cfg.read('ranges.ini', encoding='utf-8')
 
             # 读取并转换成 int，再设置到滑条
             self.Hmin_slider.setValue(int(cfg['HSV']['hmin']))
@@ -1187,7 +1080,6 @@ class Dialog(QDialog,Ui_Dialog):
             self.Smax_slider.setValue(255)
             self.Vmin_slider.setValue(0)
             self.Vmax_slider.setValue(255)
-
 
 
 def main():
