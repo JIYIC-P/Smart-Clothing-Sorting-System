@@ -67,8 +67,8 @@
       <widget class="QComboBox" name="choice_push">
        <property name="geometry">
         <rect>
-         <x>1170</x>
-         <y>390</y>
+         <x>1140</x>
+         <y>50</y>
          <width>121</width>
          <height>31</height>
         </rect>
@@ -99,31 +99,11 @@
         </property>
        </item>
       </widget>
-      <widget class="QTextEdit" name="uper">
-       <property name="geometry">
-        <rect>
-         <x>1180</x>
-         <y>150</y>
-         <width>104</width>
-         <height>71</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="downer">
-       <property name="geometry">
-        <rect>
-         <x>1170</x>
-         <y>260</y>
-         <width>101</width>
-         <height>81</height>
-        </rect>
-       </property>
-      </widget>
       <widget class="QPushButton" name="applay">
        <property name="geometry">
         <rect>
-         <x>1170</x>
-         <y>450</y>
+         <x>1270</x>
+         <y>40</y>
          <width>131</width>
          <height>51</height>
         </rect>
@@ -135,10 +115,10 @@
       <widget class="QTextEdit" name="txt_hsv">
        <property name="geometry">
         <rect>
-         <x>850</x>
-         <y>180</y>
-         <width>271</width>
-         <height>121</height>
+         <x>1080</x>
+         <y>430</y>
+         <width>321</width>
+         <height>101</height>
         </rect>
        </property>
        <property name="sizePolicy">
@@ -152,7 +132,7 @@
        <property name="geometry">
         <rect>
          <x>880</x>
-         <y>370</y>
+         <y>130</y>
          <width>200</width>
          <height>60</height>
         </rect>
@@ -182,8 +162,8 @@
       <widget class="QPushButton" name="btn_start">
        <property name="geometry">
         <rect>
-         <x>870</x>
-         <y>70</y>
+         <x>880</x>
+         <y>30</y>
          <width>200</width>
          <height>60</height>
         </rect>
@@ -207,8 +187,8 @@
       <widget class="QComboBox" name="comboBox_mode">
        <property name="geometry">
         <rect>
-         <x>890</x>
-         <y>500</y>
+         <x>880</x>
+         <y>230</y>
          <width>200</width>
          <height>60</height>
         </rect>
@@ -249,6 +229,121 @@
          <string>形状</string>
         </property>
        </item>
+      </widget>
+      <widget class="QSlider" name="Hmin_slider">
+       <property name="geometry">
+        <rect>
+         <x>1140</x>
+         <y>150</y>
+         <width>16</width>
+         <height>160</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Hmin</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QSlider" name="Smin_slider">
+       <property name="geometry">
+        <rect>
+         <x>1230</x>
+         <y>150</y>
+         <width>16</width>
+         <height>160</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Smin</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QSlider" name="Vmin_slider">
+       <property name="geometry">
+        <rect>
+         <x>1320</x>
+         <y>150</y>
+         <width>16</width>
+         <height>160</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Vmin</string>
+       </property>
+       <property name="maximum">
+        <number>96</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QTextEdit" name="txt_hsv_2">
+       <property name="geometry">
+        <rect>
+         <x>1080</x>
+         <y>320</y>
+         <width>321</width>
+         <height>101</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QSlider" name="Hmax_slider">
+       <property name="geometry">
+        <rect>
+         <x>1170</x>
+         <y>150</y>
+         <width>16</width>
+         <height>160</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Hmax</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QSlider" name="Smax_slider">
+       <property name="geometry">
+        <rect>
+         <x>1260</x>
+         <y>150</y>
+         <width>16</width>
+         <height>160</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Smax</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QSlider" name="Vmax_slider">
+       <property name="geometry">
+        <rect>
+         <x>1350</x>
+         <y>150</y>
+         <width>16</width>
+         <height>160</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Vmax</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
       </widget>
      </widget>
      <widget class="QWidget" name="tab_2">

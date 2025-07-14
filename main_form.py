@@ -134,10 +134,29 @@ class Dialog(QDialog,Ui_Dialog):
         self.setup_led_indicator()
         self.init_sys_tble()
         self.read_color_ini()
-        
 
+        self.Hmin_slider.setRange(0, 179)
+        self.Hmin_slider.setValue(0)
+        self.Hmax_slider.setRange(0, 179)
+        self.Hmax_slider.setValue(179)
+        self.Hmin_slider.valueChanged.connect(self.update_HSV_values)
+        self.Hmax_slider.valueChanged.connect(self.update_HSV_values)
 
-    
+        self.Smin_slider.setRange(0, 255)
+        self.Smin_slider.setValue(0)
+        self.Smax_slider.setRange(0, 255)
+        self.Smax_slider.setValue(255)
+        self.Smin_slider.valueChanged.connect(self.update_HSV_values)
+        self.Smax_slider.valueChanged.connect(self.update_HSV_values)
+
+        self.Vmin_slider.setRange(0, 255)
+        self.Vmin_slider.setValue(0)
+        self.Vmax_slider.setRange(0, 255)
+        self.Vmax_slider.setValue(255)
+        self.Vmin_slider.valueChanged.connect(self.update_HSV_values)
+        self.Vmax_slider.valueChanged.connect(self.update_HSV_values)
+        self.update_HSV_values()
+
             
 
     @pyqtSlot()
@@ -337,50 +356,6 @@ class Dialog(QDialog,Ui_Dialog):
         # 连接按钮点击信号
         for each in self.btn_output:
             each.clicked.connect(lambda: self.btn_output_clicked(self.sender()))
-
-
-
-#    def init_trigger(self):
-        #self.reg_trigger = QTimer()
-        #self.reg_trigger.timeout.connect(self.trigger_check)
-        #self.reg_trigger.start(100)
-
-
-
-    # def trigger_check(self):
-    #     """
-    #     触发检查
-    #     """
-    #     for i in range(1,5):
-    #         if self.mbus.trig_status[i] == 1: #trig_down
-    #             t = self.mbus.count_trig_u[i]-self.mbus.count_trig_u[5]
-    #             print("trig :",self.mbus.trig_status)
-    #             print(f"tu[{i}]:",self.mbus.count_trig_u[i],"tu[5]",self.mbus.count_trig_u[5],"\ni:",i)
-
-    #             if len(self.cloth)>0 :
-    #                 if self.cloth[t] == i : #TODO:==推杆推动的条件 
-    #                     self.mbus.values[i-1] = 62580
-    #                     btn = self.btn_output[i-1]
-    #                     if  btn.accessibleDescription()=='0':
-    #                         btn.setAccessibleDescription("1")
-    #                     self.mbus.func = 1
-    #                     print("cloth before pop:",self.cloth)
-    #                     self.cloth.pop(t)
-    #                     print("cloth after  pop:",self.cloth)
-    #                     time.sleep(0.2)
-    #                     self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
-                        
-
-    #     if self.mbus.trig_status[5] == 1:
-    #         if len(self.cloth)>0 :
-    #             if self.cloth[0] < 0 : #TODO:==推杆推动的条件 
-    #                 self.mbus.values[4] = 62580
-    #                 self.mbus.func = 1
-    #                 self.cloth.pop(0)
-    #                 self.mbus.count_trig_u[5] += 1
-    #     elif self.mbus.trig_status[5] == 2: #trig_up
-    #         self.cloth.pop(0)
-
 
 
     def show_btn_input(self):   
@@ -594,12 +569,16 @@ class Dialog(QDialog,Ui_Dialog):
 
                 #判断下降沿与上升沿
                 if  self.mbus.trig_status[0]==1 :
+
                     frame_koutu=self.tune_hsv_threshold(frame_koutu)
+                    #TODO： 每次都需要手动调，后续应该在QT中实现，每次都用滑槽的值做，而不是更新滑槽控件
                     #在此处更新了self.average_hsv，现在的抠图算法，手动识别
                     #frame_koutu=self.cutoff_img(frame_koutu)
                     #在此处更新了self.average_hsv，原本的抠图算法，自动识别
                     #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
-                    #print(self.average_hsv.tolist())e
+                    #print(self.average_hsv.tolist())
+
+
                     self.show_fix_img(frame_koutu)
                     self.worker[1]=self.average_hsv.tolist()
 
@@ -684,25 +663,25 @@ class Dialog(QDialog,Ui_Dialog):
                 cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
                                 {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
 
-        while True:
-            hmin = cv2.getTrackbarPos('Hmin', 'Tune')
-            smin = cv2.getTrackbarPos('Smin', 'Tune')
-            vmin = cv2.getTrackbarPos('Vmin', 'Tune')
-            hmax = cv2.getTrackbarPos('Hmax', 'Tune')
-            smax = cv2.getTrackbarPos('Smax', 'Tune')
-            vmax = cv2.getTrackbarPos('Vmax', 'Tune')
+        
+        self.hmin = cv2.getTrackbarPos('Hmin', 'Tune')
+        self.smin = cv2.getTrackbarPos('Smin', 'Tune')
+        self.vmin = cv2.getTrackbarPos('Vmin', 'Tune')
+        self.hmax = cv2.getTrackbarPos('Hmax', 'Tune')
+        self.smax = cv2.getTrackbarPos('Smax', 'Tune')
+        self.vmax = cv2.getTrackbarPos('Vmax', 'Tune')
 
-            mask = cv2.inRange(hsv, (hmin, smin, vmin), (hmax, smax, vmax))
-            mask = cv2.bitwise_not(mask)  # 1=衣物区域
-            vis = cv2.bitwise_and(img, img, mask=mask)
+        mask = cv2.inRange(hsv, (self.hmin, self.smin, self.vmin), (self.hmax, self.smax, self.vmax))
+        mask = cv2.bitwise_not(mask)  # 1=衣物区域
 
-            cv2.imshow('mask', mask)
-            cv2.imshow('result', vis)
-            if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
-                self.average_hsv = np.mean(vis, axis=0)
-                print("hmin:",hmin,"smin:",smin,"vmin:",vmin,"hmax:",hmax,"sman:",smax,"vmax:",vmax)
-                cv2.destroyAllWindows()
-                return vis  # 返回处理后的图像
+        vis = cv2.bitwise_and(img, img, mask=mask)
+
+        cv2.imshow('mask', mask)
+        cv2.imshow('result', vis)
+        if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
+            self.average_hsv = np.mean(vis, axis=0)
+            cv2.destroyAllWindows()
+            return vis  # 返回处理后的图像
 
 
     def cutoff_img(self,img):
@@ -1047,6 +1026,13 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.setItem(row, 1, QTableWidgetItem(cfg_dat))
         self.tableWidget.setItem(row, 2, QTableWidgetItem(cfg_beizhu))
 
+    def update_HSV_values(self):
+        self.hmin = self.Hmin_slider.value()
+        self.hmax = self.Hmax_slider.value()
+        self.smin = self.Smin_slider.value()
+        self.smax = self.Smax_slider.value()
+        self.vmin = self.Vmin_slider.value()
+        self.vmax = self.Vmax_slider.value()
 
 
 def main():
