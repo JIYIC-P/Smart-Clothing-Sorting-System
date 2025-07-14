@@ -602,13 +602,18 @@ class Dialog(QDialog,Ui_Dialog):
         return frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
         
 
-    def show_orin_img(self,frame_orin):
-        len_x = frame_orin.shape[1]  # 获取图像大小
-        wid_y = frame_orin.shape[0]
-        frame = QImage(frame_orin.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-        pix = QPixmap.fromImage(frame)   
+    def show_orin_img(self, frame_orin):
+        # 将 BGR 转换为 RGB
+        rgb_image = cv2.cvtColor(frame_orin, cv2.COLOR_BGR2RGB)
+        
+        len_x = rgb_image.shape[1]  # 获取图像宽度
+        wid_y = rgb_image.shape[0]  # 获取图像高度
+        
+        # 创建 QImage，使用 RGB888 格式
+        frame = QImage(rgb_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)
+        pix = QPixmap.fromImage(frame)
         pix = pix.scaledToWidth(345)
-        self.img_orign.setPixmap (pix)  # 在label上显示图片
+        self.img_orign.setPixmap(pix)  # 在label上显示图片
 
     def show_fix_img(self,frame_koutu):
         """
@@ -671,7 +676,7 @@ class Dialog(QDialog,Ui_Dialog):
                 # cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
                 #                 {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
 
-        while True:
+        #while True:
             # self.hmin = cv2.getTrackbarPos('Hmin', 'Tune')
             # self.smin = cv2.getTrackbarPos('Smin', 'Tune')
             # self.vmin = cv2.getTrackbarPos('Vmin', 'Tune')
@@ -679,19 +684,19 @@ class Dialog(QDialog,Ui_Dialog):
             # self.smax = cv2.getTrackbarPos('Smax', 'Tune')
             # self.vmax = cv2.getTrackbarPos('Vmax', 'Tune')
 
-            mask = cv2.inRange(hsv, (self.hmin, self.smin, self.vmin), (self.hmax, self.smax, self.vmax))
-            mask = cv2.bitwise_not(mask)  # 1=衣物区域
+        mask = cv2.inRange(hsv, (self.hmin, self.smin, self.vmin), (self.hmax, self.smax, self.vmax))
+        mask = cv2.bitwise_not(mask)  # 1=衣物区域
 
-            vis = cv2.bitwise_and(img, img, mask=mask)
+        vis = cv2.bitwise_and(img, img, mask=mask)
             
-            self.show_fix_img(vis)
+        self.show_fix_img(vis)
             # cv2.imshow('vis', vis)
             # cv2.imshow('mask',mask)
-            QApplication.processEvents()
-            if hasattr(self, 'key_pressed') and self.key_pressed == Qt.Key_Escape:
-                self.average_hsv = np.mean(vis, axis=0)
-                delattr(self, 'key_pressed')  # 清除按键状态
-                return vis  # 返回处理后的图像
+            # QApplication.processEvents()
+            # if hasattr(self, 'key_pressed') and self.key_pressed == Qt.Key.Key_CapsLock:
+            #     self.average_hsv = np.mean(vis, axis=0)
+            #     delattr(self, 'key_pressed')  # 清除按键状态
+        return vis  # 返回处理后的图像
             # if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
             #     self.average_hsv = np.mean(vis, axis=0)
             #     return vis  # 返回处理后的图像
