@@ -120,8 +120,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.timer.start(100)
 
         self.t_YoLo=QTimer()
-        #self.t_YoLo.timeout.connect(self.show_img)
-        self.t_YoLo.timeout.connect(self.update)
+        self.t_YoLo.timeout.connect(self.show_img)
+        #self.t_YoLo.timeout.connect(self.update)
         self.t_YoLo.start(100)
 
         self.t_back=QTimer()
@@ -548,25 +548,27 @@ class Dialog(QDialog,Ui_Dialog):
         if self.mode is not None:
             frame = self.streamer.grab_frame() 
             if frame is not None:
-                self.show_orin_img(frame)#在Qt上显示原图
+
+                self.show_orin_img(self,frame)#在Qt上显示原图
                 frame_koutu = self.cut_img(frame)#裁剪图片
-                frame_koutu=self.tune_hsv_threshold(frame_koutu)#若触发相机位传感器下降沿则调色
-                self.average_hsv = np.mean(frame_koutu, axis=0)
-                self.show_fix_img(frame_koutu)
 
                 #判断下降沿与上升沿
                 if  self.mbus.trig_status[0]==1 :
 
+                    frame_koutu=self.tune_hsv_threshold(frame_koutu)#若触发相机位传感器下降沿则调色
+                    #TODO： 每次都需要手动调，后续应该在QT中实现，每次都用滑槽的值做，而不是更新滑槽控件
                     #在此处更新了self.average_hsv，现在的抠图算法，手动识别
                     #frame_koutu=self.cutoff_img(frame_koutu)
                     #在此处更新了self.average_hsv，原本的抠图算法，自动识别
                     #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
                     #print(self.average_hsv.tolist())
+
+                    self.show_fix_img(frame_koutu)
                     self.worker[1]=self.average_hsv.tolist()
 
                 for i in range(5):
                     try:
-                        #print("workers",self.worker)
+                        print("workers",self.worker)
                         b=i+1
                         if  self.mbus.trig_status[b]==1  :
                             print("worker:",self.worker[b])
@@ -613,19 +615,14 @@ class Dialog(QDialog,Ui_Dialog):
         pix = pix.scaledToWidth(345)
         self.img_orign.setPixmap(pix)  # 在label上显示图片
 
-    def show_fix_img(self,frame_fix):
+    def show_fix_img(self,frame_koutu):
         """
         在text_hsv上显示图片
         """
-        rgb_image = cv2.cvtColor(frame_fix, cv2.COLOR_BGR2RGB)
-        
-        len_x = rgb_image.shape[1]  # 获取图像宽度
-        wid_y = rgb_image.shape[0]  # 获取图像高度
-        
-        # 创建 QImage，使用 RGB888 格式
-        frame = QImage(rgb_image.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)
-        #frame_fix = QImage(frame_fix.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-        pix_koutu = QPixmap.fromImage(frame)   
+        len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
+        wid_koutu_y = frame_koutu.shape[0]
+        frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+        pix_koutu = QPixmap.fromImage(frame_koutu)   
         pix_koutu = pix_koutu.scaledToWidth(345)
 
         self.txt_hsv.setPlainText(str(self.average_hsv))
@@ -692,6 +689,7 @@ class Dialog(QDialog,Ui_Dialog):
 
         vis = cv2.bitwise_and(img, img, mask=mask)
             
+        self.show_fix_img(vis)
             # cv2.imshow('vis', vis)
             # cv2.imshow('mask',mask)
             # QApplication.processEvents()
