@@ -92,7 +92,6 @@ class Dialog(QDialog,Ui_Dialog):
         #self.init_trigger()
 
 
-
     def camera_init(self):
         stream_link = "rtsp://192.168.1.100/user=admin&password=&channel=1&stream=0.sdp?"
         self.streamer = ThreadedCamera(stream_link)
@@ -112,16 +111,13 @@ class Dialog(QDialog,Ui_Dialog):
         self.timer.start(100)
 
         self.t_YoLo=QTimer()
-        #self.t_YoLo.timeout.connect(self.show_img)
-        self.t_YoLo.timeout.connect(self.update)
+        self.t_YoLo.timeout.connect(self.show_img)
+        #self.t_YoLo.timeout.connect(self.update)
         self.t_YoLo.start(100)
 
         self.t_back=QTimer()
         self.t_back.timeout.connect(self.back)
         self.t_back.start(100)
-        
-          
-
 
 
     def Ui_init(self):
@@ -156,7 +152,6 @@ class Dialog(QDialog,Ui_Dialog):
         self.Vmin_slider.valueChanged.connect(self.update_HSV_values)
         self.Vmax_slider.valueChanged.connect(self.update_HSV_values)
         self.update_HSV_values()
-
             
 
     @pyqtSlot()
@@ -378,6 +373,7 @@ class Dialog(QDialog,Ui_Dialog):
           self.trig_pusher( 3)
           print("btn1 clicked ") 
 
+
     def trig_pusher(self,num):
         btn=self.btn_output[num] 
         No = int(btn.accessibleName())-1
@@ -399,7 +395,6 @@ class Dialog(QDialog,Ui_Dialog):
                     self.btn_output[i].setAccessibleDescription("0")
         if signal == 1:
             self.mbus.func = 1
-
 
 
     @pyqtSlot()
@@ -493,12 +488,11 @@ class Dialog(QDialog,Ui_Dialog):
                 frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
 
 
-                #frame_koutu=self.tune_hsv_threshold(frame_koutu)
+                frame_koutu=self.tune_hsv_threshold(frame_koutu)
                 #在此处更新了self.average_hsv，现在的抠图算法，手动识别
 
-                frame_koutu=self.cutoff_img(frame_koutu)
+                #frame_koutu=self.cutoff_img(frame_koutu)
                 #在此处更新了self.average_hsv，原本的抠图算法，自动识别
-
 
                 len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
                 wid_koutu_y = frame_koutu.shape[0]
@@ -546,38 +540,20 @@ class Dialog(QDialog,Ui_Dialog):
             frame = self.streamer.grab_frame() 
             if frame is not None:
 
-                len_x = frame.shape[1]  # 获取图像大小
-                wid_y = frame.shape[0]
-                frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                pix = QPixmap.fromImage(frame11)   
-                pix = pix.scaledToWidth(345)
-                self.img_orign.setPixmap (pix)  # 在label上显示图片
+                self.show_orin_img(self,frame)#在Qt上显示原图
 
-                #koutu  zai koutu_img  shang xianshi 
-                # 定义裁剪区域
-                # 格式：[起始x坐标, 起始y坐标, 宽度, 高度]
-                # 注意：坐标从左上角开始，x向右增加，y向下增加
-                crop_x = 100  # 起始x坐标
-                crop_y = 0   # 起始y坐标
-                crop_width = 500  # 裁剪宽度
-                crop_height = 400  # 裁剪高度
-
-                # 裁剪图片
-                # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
-                frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
-
+                frame_koutu = self.cut_img(frame)#裁剪图片
 
                 #判断下降沿与上升沿
                 if  self.mbus.trig_status[0]==1 :
 
-                    frame_koutu=self.tune_hsv_threshold(frame_koutu)
+                    frame_koutu=self.tune_hsv_threshold(frame_koutu)#若触发相机位传感器下降沿则调色
                     #TODO： 每次都需要手动调，后续应该在QT中实现，每次都用滑槽的值做，而不是更新滑槽控件
                     #在此处更新了self.average_hsv，现在的抠图算法，手动识别
                     #frame_koutu=self.cutoff_img(frame_koutu)
                     #在此处更新了self.average_hsv，原本的抠图算法，自动识别
                     #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
                     #print(self.average_hsv.tolist())
-
 
                     self.show_fix_img(frame_koutu)
                     self.worker[1]=self.average_hsv.tolist()
@@ -602,6 +578,29 @@ class Dialog(QDialog,Ui_Dialog):
                             self.worker[b] = []
                     except:
                         continue
+
+    def cut_img(self,frame):
+        #koutu  zai koutu_img  shang xianshi 
+        # 定义裁剪区域
+        # 格式：[起始x坐标, 起始y坐标, 宽度, 高度]
+        # 注意：坐标从左上角开始，x向右增加，y向下增加
+        crop_x = 100  # 起始x坐标
+        crop_y = 0   # 起始y坐标
+        crop_width = 500  # 裁剪宽度
+        crop_height = 400  # 裁剪高度
+
+        # 裁剪图片
+        # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
+        return frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
+        
+
+    def show_orin_img(self,frame_orin):
+        len_x = frame_orin.shape[1]  # 获取图像大小
+        wid_y = frame_orin.shape[0]
+        frame = QImage(frame_orin.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+        pix = QPixmap.fromImage(frame)   
+        pix = pix.scaledToWidth(345)
+        self.img_orign.setPixmap (pix)  # 在label上显示图片
 
     def show_fix_img(self,frame_koutu):
         """
@@ -657,31 +656,30 @@ class Dialog(QDialog,Ui_Dialog):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         cv2.namedWindow('Tune')
-        for ch in ['H', 'S', 'V']:
-            for rng in ['min', 'max']:
-                default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
-                cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
-                                {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
+        # for ch in ['H', 'S', 'V']:
+        #     for rng in ['min', 'max']:
+        #         default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
+                # cv2.createTrackbar(f'{ch}{rng}', 'Tune', default,
+                #                 {'H': 179, 'S': 255, 'V': 255}[ch], lambda x: None)
 
-        
-        self.hmin = cv2.getTrackbarPos('Hmin', 'Tune')
-        self.smin = cv2.getTrackbarPos('Smin', 'Tune')
-        self.vmin = cv2.getTrackbarPos('Vmin', 'Tune')
-        self.hmax = cv2.getTrackbarPos('Hmax', 'Tune')
-        self.smax = cv2.getTrackbarPos('Smax', 'Tune')
-        self.vmax = cv2.getTrackbarPos('Vmax', 'Tune')
+        while True:
+            # self.hmin = cv2.getTrackbarPos('Hmin', 'Tune')
+            # self.smin = cv2.getTrackbarPos('Smin', 'Tune')
+            # self.vmin = cv2.getTrackbarPos('Vmin', 'Tune')
+            # self.hmax = cv2.getTrackbarPos('Hmax', 'Tune')
+            # self.smax = cv2.getTrackbarPos('Smax', 'Tune')
+            # self.vmax = cv2.getTrackbarPos('Vmax', 'Tune')
 
-        mask = cv2.inRange(hsv, (self.hmin, self.smin, self.vmin), (self.hmax, self.smax, self.vmax))
-        mask = cv2.bitwise_not(mask)  # 1=衣物区域
+            mask = cv2.inRange(hsv, (self.hmin, self.smin, self.vmin), (self.hmax, self.smax, self.vmax))
+            mask = cv2.bitwise_not(mask)  # 1=衣物区域
 
-        vis = cv2.bitwise_and(img, img, mask=mask)
-
-        cv2.imshow('mask', mask)
-        cv2.imshow('result', vis)
-        if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
-            self.average_hsv = np.mean(vis, axis=0)
-            cv2.destroyAllWindows()
-            return vis  # 返回处理后的图像
+            vis = cv2.bitwise_and(img, img, mask=mask)
+            cv2.imshow('vis', vis)
+            cv2.imshow('mask', mask)
+            if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
+                self.average_hsv = np.mean(vis, axis=0)
+                cv2.destroyAllWindows()
+                return vis  # 返回处理后的图像
 
 
     def cutoff_img(self,img):
@@ -1033,6 +1031,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.smax = self.Smax_slider.value()
         self.vmin = self.Vmin_slider.value()
         self.vmax = self.Vmax_slider.value()
+        self.range ="H="+str(self.hmin)+":"+str(self.hmax)+"\nS="+str(self.smin)+":"+str(self.smax)+"\nV="+str(self.vmin)+":"+str(self.vmax)
+        self.txt_hsv_2.setPlainText(self.range)
 
 
 def main():
