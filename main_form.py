@@ -655,7 +655,7 @@ class Dialog(QDialog,Ui_Dialog):
             raise FileNotFoundError('图片没找到')
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        cv2.namedWindow('Tune')
+        #cv2.namedWindow('Tune')
         # for ch in ['H', 'S', 'V']:
         #     for rng in ['min', 'max']:
         #         default = 0 if rng == 'min' else {'H': 179, 'S': 255, 'V': 255}[ch]
@@ -675,7 +675,10 @@ class Dialog(QDialog,Ui_Dialog):
 
             vis = cv2.bitwise_and(img, img, mask=mask)
             cv2.imshow('vis', vis)
+            cv2.setWindowProperty('vis', cv2.WND_PROP_TOPMOST, 1)
+    
             cv2.imshow('mask', mask)
+            cv2.setWindowProperty('mask', cv2.WND_PROP_TOPMOST, 1)
             if cv2.waitKey(1) & 0xFF == 27:  # Esc 退出
                 self.average_hsv = np.mean(vis, axis=0)
                 cv2.destroyAllWindows()
