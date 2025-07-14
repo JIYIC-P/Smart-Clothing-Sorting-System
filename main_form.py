@@ -562,8 +562,6 @@ class Dialog(QDialog,Ui_Dialog):
                     #在此处更新了self.average_hsv，原本的抠图算法，自动识别
                     #此处是已经处理好的图片，正将其显示出来，并且更新均值hsv
                     #print(self.average_hsv.tolist())
-
-                    self.show_fix_img(frame_koutu)
                     self.worker[1]=self.average_hsv.tolist()
 
                 for i in range(5):
