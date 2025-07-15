@@ -17,23 +17,22 @@ class MBUS():
 
 
         self.isopend = False
-        self.master = None #串口服务器
-        self.end = False #beating 线程结束信号量
-        self.func = 0  #beating 线程功能信号量
+        self.master = None
+        self.end = False
         # 传递信号量
 
-        self.config = [] #推杆电机转速等配置信息，待优化
-        self.distance = [] #推杆距离，待优化
+        self.func = 0  
+        self.config = []
+        self.distance = []
+        self.values = [0,0,0,0,0]    
+        self.t1 = [time.time() for _ in range(5)]
         #电机运动参数
 
 
         self.ADR_IN = 0
         self.NUM_IN = 6
-        self.ADR_COILS = 0
-        self.NUM_COILS = 5
-        self.VALUES = [0,0,0,0,0] #电机控制量
-        #self.ADR_COIL = 0
-        #self.COIL_VALUE = 0
+        self.ADR_COIL = 0
+        self.NUM_COIL = 5
         # 受控设备
 
 
@@ -46,11 +45,31 @@ class MBUS():
         
 
         self.sender = threading.Thread(target=self.beating)
-        self.beating_interval = 0.1
+        self.beating_interval = 0.07
         # 发指令线程
         # 默认心跳间隔
 
         self.lock = threading.Lock()
+
+
+    # def send_to_2(self,i,ADR):
+    #     try:       
+    #         int_value = int(i) #原精度为三位小数，受控端会将整数转化为小数
+    #         # 2. 拆分高低16位
+    #         high_word1 = (int_value >> 16) & 0xFFFF  # 高16位（右移16位）
+    #         low_word1 = int_value & 0xFFFF
+    #         print(f"i {i},ADR {ADR},high_word1 {high_word1},low_word1 {low_word1}")
+    #         
+
+    #             self.master.execute(
+    #                 2,
+    #                 fnc.WRITE_MULTIPLE_REGISTERS,
+    #                 starting_address= ADR,
+    #                 quantity_of_x = 2,
+    #                 output_value=[low_word1,high_word1]
+    #             )
+    #     except Exception as e:
+    #         print(f": {e}")
 
 
 
@@ -79,38 +98,36 @@ class MBUS():
         """
         此函数修改电机控制板正反转速度
         """
-        with self.lock:
+        for s in self.config:
+            int_value = int(s[1]) #原精度为三位小数，受控端会将整数转化为小数
+            # 2. 拆分高低16位
+            high_word1 = (int_value >> 16) & 0xFFFF  # 高16位（右移16位）
+            low_word1 = int_value & 0xFFFF
 
-            for s in self.config:
-                int_value = int(s[1]) #原精度为三位小数，受控端会将整数转化为小数
-                # 2. 拆分高低16位
-                high_word1 = (int_value >> 16) & 0xFFFF  # 高16位（右移16位）
-                low_word1 = int_value & 0xFFFF
-
-                int_value = int(s[2])  
-                high_word2 = (int_value >> 16) & 0xFFFF  # 高16位（右移16位）
-                low_word2 = int_value & 0xFFFF
-                print(s[0],s[1],s[2],"\n")
-                print(f"id\t{s[0]-1},\nhigh_word1\t{high_word1},\nlow_word1\t{low_word1},\nhigh_word2\t{high_word2},\nlow_word2\t{low_word2}")
-                try:
-                    self.master.execute(
-                        slave= s[0],
-                        function_code=fnc.WRITE_MULTIPLE_REGISTERS,
-                        starting_address = 404,
-                        quantity_of_x = 2,
-                        output_value=[low_word1,high_word1]
-                    )
-                    time.sleep(0.1)
-                    self.master.execute(
-                        slave= s[0],
-                        function_code=fnc.WRITE_MULTIPLE_REGISTERS,
-                        starting_address = 408,
-                        quantity_of_x = 2,
-                        output_value=[low_word2,high_word2]
-                    )
-                    time.sleep(0.1)
-                except Exception as e:
-                    print(f"设置速度错误: sid{s[0]}{e}")
+            int_value = int(s[2])  
+            high_word2 = (int_value >> 16) & 0xFFFF  # 高16位（右移16位）
+            low_word2 = int_value & 0xFFFF
+            print(s[0],s[1],s[2],"\n")
+            print(f"id\t{s[0]-1},\nhigh_word1\t{high_word1},\nlow_word1\t{low_word1},\nhigh_word2\t{high_word2},\nlow_word2\t{low_word2}")
+            try:
+                self.master.execute(
+                    slave= s[0],
+                    function_code=fnc.WRITE_MULTIPLE_REGISTERS,
+                    starting_address = 404,
+                    quantity_of_x = 2,
+                    output_value=[low_word1,high_word1]
+                )
+                time.sleep(0.1)
+                self.master.execute(
+                    slave= s[0],
+                    function_code=fnc.WRITE_MULTIPLE_REGISTERS,
+                    starting_address = 408,
+                    quantity_of_x = 2,
+                    output_value=[low_word2,high_word2]
+                )
+                time.sleep(0.1)
+            except Exception as e:
+                print(f"设置速度错误: sid{s[0]}{e}")
 
 
 
@@ -126,7 +143,7 @@ class MBUS():
             low_word1 = int_value & 0xFFFF
             print(f"id\t{s[0]-1},\nhigh_word1\t{high_word1},\nlow_word1\t{low_word1}")
             try:
-                with self.lock:
+                
 
                     self.master.execute(
                         slave= s[0],
@@ -144,11 +161,11 @@ class MBUS():
         """关闭Modbus RTU串口连接"""
         if not self.isopend:
             raise Exception(f'端口未打开: {self.PORT}')
-        with self.lock:
-            self.master.close()
-            time.sleep(0.11)
-            del self.master
-            self.isopend = False
+        
+        self.master.close()
+        time.sleep(0.11)
+        del self.master
+        self.isopend = False
 
 
 
@@ -164,13 +181,13 @@ class MBUS():
             读取的值存储在self.registers中
         """
         try:
-            with self.lock:
-                self.cur_reg = self.master.execute(
-                    1,
-                    fnc.READ_INPUT_REGISTERS,
-                    self.ADR_IN,
-                    self.NUM_IN 
-                )
+            
+            self.cur_reg = self.master.execute(
+                1,
+                fnc.READ_INPUT_REGISTERS,
+                self.ADR_IN,
+                self.NUM_IN 
+            )
             for i in range(6):#0 保持 1 下降 2 上升
                 if self.cur_reg[i] - self.pre_reg[i] > 0 :
                     self.trig_status[i] = 1
@@ -178,10 +195,10 @@ class MBUS():
                 elif self.cur_reg[i] - self.pre_reg[i] < 0:
                     self.trig_status[i] = 2
                     self.count_trig_u[i] += 1 #up计数
-                    print("count:",self.count_trig_u)
 
                 else : 
                     self.trig_status[i] = 0
+            #print("trig_status:",self.trig_status)
 
 
             self.pre_reg = self.cur_reg
@@ -198,7 +215,7 @@ class MBUS():
         心跳发送指令：默认读取输入，如果传参则写/设置
         使用self.in_beating_interval作为间隔时间
         """
-        
+
         while True:
             if self.end:
                 break
@@ -213,7 +230,7 @@ class MBUS():
                 self.in_once()
 
             elif func == 1:
-                self.coils_control()
+                self.coil_once()
                 self.func = 0
 
             elif func == 2:
@@ -223,37 +240,10 @@ class MBUS():
 
 
 
-    # def coil_control(self):
-    #     """
-    #     控制一个线圈
-        
-    #     参数:
-    #         ADR: 起始地址 (默认:0)
-    #         NUM: 线圈数量 (默认:8)
-    #         values: 控制值列表 (默认:全部断开)
-    #                [62580]表示闭合, [0]表示断开
-    #     """
-    #     if self.COIL_VALUE is None:
-    #         return
-    #     try:
-    #         with self.lock:
-    #             self.master.execute(
-    #                 1,
-    #                 fnc.WRITE_MULTIPLE_COILS,
-    #                 starting_address=self.ADR_COIL,
-    #                 quantity_of_x=1,
-    #                 output_value=self.COIL_VALUE
-    #             )
-    #     except Exception as e:
-    #         print(f"控制失败: {e}")
 
 
-    def set_coils(self,ADR=0,NUM=5,VALUES=None):
-        self.ADR_COILS = ADR
-        self.NUM = NUM
-        self.VALUES = VALUES
 
-    def coils_control(self):
+    def coil_once(self):
         """
         控制多个线圈
         
@@ -263,24 +253,33 @@ class MBUS():
             values: 控制值列表 (默认:全部断开)
                    [62580]表示闭合, [0]表示断开
         """
-        if self.VALUES is None:
-            return
+        if self.values is None:
+            VALUES = [0] * self.NUM_COIL         
+        else :
+            VALUES = self.values
         try:
-            with self.lock:
+            #print("VALUES:",VALUES)
+            for i in range(5):
+                if self.values[i] == 62580:
+                    self.t1[i] = time.time()
+                    self.coils[i] = 1
+                else :
+                    self.coils[i] = 0
+            
                 self.master.execute(
                     1,
                     fnc.WRITE_MULTIPLE_COILS,
-                    starting_address=self.ADR_COILS,
-                    quantity_of_x=self.NUM_COILS,
-                    output_value=self.VALUES
+                    starting_address=self.ADR_COIL,
+                    quantity_of_x=self.NUM_COIL,
+                    output_value=VALUES
                 )
         except Exception as e:
             print(f"控制失败: {e}")
 
-    
+
 
     def set_salarate(self,id,value):
-        with self.lock:
+        
 
             int_value = int(value) 
             # 2. 拆分高低16位
@@ -304,3 +303,13 @@ class MBUS():
                 )
             except Exception as e:
                 print(f"设置距离错误: sid{id}{e}")
+
+
+
+def main(): 
+    print("end")
+
+
+
+if __name__ == "__main__":
+    main()
