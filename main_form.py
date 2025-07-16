@@ -77,7 +77,8 @@ class Dialog(QDialog,Ui_Dialog):
             2 : ([40, 50, 50], [80, 255, 255]),       # 绿色范围
             3 : ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
             4 : ([20, 100, 100], [30, 255, 255]),     # 黄色范围
-}
+        }
+        self.standrad_color = [[],[],[],[],[]]
         self.index=1
         self.list_hsv = []
         self.mode = None
@@ -88,10 +89,11 @@ class Dialog(QDialog,Ui_Dialog):
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
-        self.init_trigger()
+#        self.init_trigger()
         self.average_hsv = None
         self.worker=[-1,-1,-1,-1,-1,-1]
         self.pusher = [0,1,2,3,4]
+       
 
 
     def camera_init(self):
@@ -139,6 +141,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.btn_input_init()
         self.setup_led_indicator()
         self.init_sys_tble()
+        
 
     @pyqtSlot()
     def on_applay_clicked(self):
@@ -149,19 +152,28 @@ class Dialog(QDialog,Ui_Dialog):
         down_num=self.float_value.toPlainText()
         index= self.choice_push.currentIndex()
         for i in range(3):
-            self.color_ranges[index][0][i]= range_col[i]-int(down_num)
-            self.color_ranges[index][1][i]= range_col[i]+int(uper_num)
+            self.color_ranges[index][0][i]= round(range_col[i]-int(down_num),2)
+            self.color_ranges[index][1][i]= round(range_col[i]+int(uper_num),2)
+
         #print("self.color_ranges:",self.color_ranges)
         # 将字典转为字符串后写入 INI
         cfg = configparser.ConfigParser()
         cfg['COLOR_RANGES'] = {'ranges': json.dumps(self.color_ranges)}
         with open('color.ini', 'w', encoding='utf-8') as f:
             cfg.write(f)
-       
+
+
+        self.txt_hsv_3.setPlainText(str(self.standrad_color))
+
+
     def resizeEvent(self, event):
         self.update_all_fonts()
         super().resizeEvent(event)
 
+    def get_std_color(self):
+        for i in range(5):
+            for j in range(3):
+                self.standrad_color[i].append(round((self.color_ranges[i][0][j]+self.color_ranges[i][1][j])/2,2))
 
 
     def update_all_fonts(self):
@@ -339,10 +351,10 @@ class Dialog(QDialog,Ui_Dialog):
 
 
 
-    def init_trigger(self):
-        """
-        初始化触发器
-        """
+    # def init_trigger(self):
+    #     """
+    #     初始化触发器
+    #     """
         #self.reg_trigger = QTimer()
         #self.reg_trigger.timeout.connect(self.trigger_check)
         #self.reg_trigger.start(100)
@@ -431,7 +443,7 @@ class Dialog(QDialog,Ui_Dialog):
         #print(self.width(),self.height())
         #开始运行识别
         time.sleep(0.1)
-        self.load_pusher()
+        self.load_color_range()
         self.mode = self.comboBox_mode.currentText()
         if self.mode == "形状":
             self.model = YOLO("yolov8n.pt")
@@ -442,8 +454,10 @@ class Dialog(QDialog,Ui_Dialog):
                 QMessageBox.warning(self, f"提示", "未提前设置串口，已自动连接{text}")
             else :
                 QMessageBox.warning(self, f"错误", "未提前设置串口，自动连接{text}失败")
+        self.txt_hsv_3.setPlainText(str(self.standrad_color))
 
-    def load_pusher(self):
+
+    def load_color_range(self):
          # 读取 color.ini 并还原 self.color_ranges
         cfg = configparser.ConfigParser()
         cfg.read('color.ini', encoding='utf-8')
@@ -455,20 +469,20 @@ class Dialog(QDialog,Ui_Dialog):
 
         # 调试打印
         print("已重新加载 self.color_ranges:", self.color_ranges)
+        self.get_std_color()
 
 
     @pyqtSlot()
     def on_btn_reset_clicked(self):
         print("btn_reset do")
         
-        
-
+        self.standrad_color = [[],[],[],[],[]]
         self.mode = None
         self.mbus.func = 0  
         self.mbus.config = []
         self.mbus.t1 = [time.time() for _ in range(5)]
         self.mbus.count_trig_u = [0]*6
-        self.worker=[-1,-1,-1,-1,-1,-1,-1]
+        self.worker=[-1,-1,-1,-1,-1,-1]
         if self.mbus.isopend :
             signal = False
             for i in self.mbus.coils:
@@ -553,6 +567,7 @@ class Dialog(QDialog,Ui_Dialog):
              out_path1 = os.path.join(out_dir, os.path.splitext(os.path.basename(path))[0] + '.png')
              cv2.imwrite(out_path, masked_image)
              cv2.imwrite(out_path1, orig)
+             print(self.average_hsv)
              print(f'[OK] 已保存 {out_path}')
 
         
@@ -635,7 +650,6 @@ class Dialog(QDialog,Ui_Dialog):
        
         if self.mode is not None:
             myimg = self.streamer.grab_frame() 
-           
             if myimg is not None:
                 frame = cv2.cvtColor(myimg,cv2.COLOR_BGR2RGB)
                 len_x = frame.shape[1]  # 获取图像大小
@@ -678,7 +692,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
                 if  self.mbus.trig_status[0] == 2 :
-                    print(self.average_hsv.tolist())
+                    print(self.list_hsv)
                     for i in range(5):
                         if self.hsv_in_range(self.list_hsv,self.color_ranges[i][0],self.color_ranges[i][1]):
                             self.worker[0] = i
@@ -713,12 +727,13 @@ class Dialog(QDialog,Ui_Dialog):
         #     lower[2] <= average[2] <= upper[2]):
         #     return True
         # return False # 如果没有匹配的颜色范围，返回 None
-        if lower[0] <= average[0] <= upper[0] :
-            if lower[1] <= average[1] <= upper[1] :
-                return True
+        if len(average)>0:
+            if lower[0] <= average[0] <= upper[0] :
+                if lower[1] <= average[1] <= upper[1] :
+                    return True
 
-            if lower[2] <= average[2] <= upper[2] :
-                return True
+                if lower[2] <= average[2] <= upper[2] :
+                    return True
 
         return False # 如果没有匹配的颜色范围，返回 None
 

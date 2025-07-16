@@ -108,7 +108,7 @@ class Ui_Dialog(object):
         self.label_4.setGeometry(QtCore.QRect(1130, 10, 90, 30))
         self.label_4.setObjectName("label_4")
         self.txt_hsv_3 = QtWidgets.QTextEdit(self.tab)
-        self.txt_hsv_3.setGeometry(QtCore.QRect(10, 630, 720, 100))
+        self.txt_hsv_3.setGeometry(QtCore.QRect(10, 630, 1440, 100))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

@@ -12,8 +12,8 @@ class ThreadedCamera:
         self._running = True  # 控制线程运行的标志
 
         # 相机参数
-        self.fps = 30
-        self.exposure = -8
+        self.fps = 60
+        self.exposure = -9
         self.resolution = [1920, 1080]
         self.brightness = 31
         self.contrast = 46
