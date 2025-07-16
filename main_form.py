@@ -91,7 +91,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.init_trigger()
         self.average_hsv = None
         self.worker=[-1,-1,-1,-1,-1,-1]
-        self.pusher = []
+        self.pusher = [0,1,2,3,4]
 
 
     def camera_init(self):
@@ -692,10 +692,11 @@ class Dialog(QDialog,Ui_Dialog):
                         if  self.mbus.trig_status[i+1] == 2  :  
                             if self.worker[i] != -1:
                                 self.worker[i+1] = self.worker[i]
+                                self.worker[i] = -1
 
 
-                        if  self.mbus.trig_status[i] == 1  :
-                            if self.worker[i+1] != i :#i是推杆的值
+                        if  self.mbus.trig_status[i+1] == 1  :
+                            if self.worker[i+1] == self.pusher[i] :#i是推杆的值
                                 self.trig_pusher(i)
                                 self.worker[i+1] = -1
 
