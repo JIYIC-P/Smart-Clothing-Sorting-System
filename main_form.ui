@@ -259,7 +259,7 @@
       <widget class="QLabel" name="label_2">
        <property name="geometry">
         <rect>
-         <x>1160</x>
+         <x>1140</x>
          <y>110</y>
          <width>90</width>
          <height>30</height>
@@ -272,7 +272,7 @@
       <widget class="QLabel" name="label_4">
        <property name="geometry">
         <rect>
-         <x>1150</x>
+         <x>1130</x>
          <y>10</y>
          <width>90</width>
          <height>30</height>
@@ -286,9 +286,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>570</y>
-         <width>240</width>
-         <height>41</height>
+         <y>630</y>
+         <width>720</width>
+         <height>100</height>
         </rect>
        </property>
        <property name="sizePolicy">
@@ -309,86 +309,6 @@
        </property>
        <property name="text">
         <string>偏移量</string>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="txt_hsv_4">
-       <property name="geometry">
-        <rect>
-         <x>260</x>
-         <y>570</y>
-         <width>240</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="txt_hsv_5">
-       <property name="geometry">
-        <rect>
-         <x>510</x>
-         <y>570</y>
-         <width>240</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="txt_hsv_6">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>630</y>
-         <width>240</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="txt_hsv_7">
-       <property name="geometry">
-        <rect>
-         <x>260</x>
-         <y>630</y>
-         <width>240</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="txt_hsv_8">
-       <property name="geometry">
-        <rect>
-         <x>510</x>
-         <y>630</y>
-         <width>240</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
        </property>
       </widget>
      </widget>

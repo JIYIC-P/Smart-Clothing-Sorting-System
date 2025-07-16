@@ -78,6 +78,7 @@ class Dialog(QDialog,Ui_Dialog):
             3 : ([90, 50, 50], [130, 255, 255]),      # 蓝色范围
             4 : ([20, 100, 100], [30, 255, 255]),     # 黄色范围
 }
+        self.index=1
         self.list_hsv = []
         self.mode = None
         self.mbus = mbs.MBUS()
@@ -89,7 +90,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.show_btn_input()
         self.init_trigger()
         self.average_hsv = None
-        self.worker=[[],[],[],[],[],[],[]]
+        self.worker=[-1,-1,-1,-1,-1,-1]
+        self.pusher = []
 
 
     def camera_init(self):
@@ -101,10 +103,9 @@ class Dialog(QDialog,Ui_Dialog):
     def Timer_init(self):
         #加入小时，分钟，和一个base作为基准
         self.base = 0
-
-        self.hour=0
-        self.min=0
-        self.sec=0
+        self.hour = 0
+        self.min = 0
+        self.sec = 0
         self.timer=QTimer()
         self.timer.timeout.connect(self.show_time)
         self.timer.start(100)
@@ -121,7 +122,7 @@ class Dialog(QDialog,Ui_Dialog):
         signal = 0
         for i in range(5):
             if self.mbus.coils[i] == 1:
-                if t - self.mbus.t1[i] > 0.7:
+                if t - self.mbus.t1[i] > 0.6:
                     signal = 1
                     self.mbus.values[i] = 0
                     self.btn_output[i].setAccessibleDescription("0")
@@ -467,8 +468,7 @@ class Dialog(QDialog,Ui_Dialog):
         self.mbus.config = []
         self.mbus.t1 = [time.time() for _ in range(5)]
         self.mbus.count_trig_u = [0]*6
-        self.worker=[[],[],[],[],[],[],[]]
-
+        self.worker=[-1,-1,-1,-1,-1,-1,-1]
         if self.mbus.isopend :
             signal = False
             for i in self.mbus.coils:
@@ -559,7 +559,7 @@ class Dialog(QDialog,Ui_Dialog):
         return masked_image
 
     @pyqtSlot()
-    def show_img(self):
+    def show_img11(self):
         if self.mode is not None:
             myimg = self.streamer.grab_frame() 
            
@@ -604,26 +604,108 @@ class Dialog(QDialog,Ui_Dialog):
                 #return
 
 
-                if  self.mbus.trig_status[0] == 1 :
+                if  self.mbus.trig_status[0] == 2 :
                     #print(self.average_hsv.tolist())
-                    self.worker[1] = self.list_hsv
+                    for i in range(5):
+                        if self.hsv_in_range(self.list_hsv,self.color_ranges[i][0],self.color_ranges[i][1]):
+                            self.worker[1] = i
+                text = self.worker[1:6]+1
+                self.txt_hsv_2.setPlainText(str(text))
 
-                print("workers",self.worker)
+
                 for i in range(5):
                     try:
-                        #print("workers",self.worker)
                         b=i+1
-                        if  self.mbus.trig_status[b] == 1  :
+                        if  self.mbus.trig_status[b] == 2  :  
+                            if i!=self.worker[b]:
+                                self.worker[b+1]=self.worker[b]
+                                self.worker[b] = -1
 
-                            #print("index :",b)
-                            if self.hsv_in_range(self.worker[b],self.color_ranges[i][0],self.color_ranges[i][1]):
+
+                        if  self.mbus.trig_status[b] == 1  :
+                            if self.worker[b] !=-1 :
                                 self.trig_pusher(i)
 
-                        if  self.mbus.trig_status[b ] == 2  :
-                            self.worker[b+1]=self.worker[b]
-                            self.worker[b] = []
+
                     except:
                         continue
+
+    @pyqtSlot()
+    def show_img(self):
+       
+        if self.mode is not None:
+            myimg = self.streamer.grab_frame() 
+           
+            if myimg is not None:
+                frame = cv2.cvtColor(myimg,cv2.COLOR_BGR2RGB)
+                len_x = frame.shape[1]  # 获取图像大小
+                wid_y = frame.shape[0]
+                frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                
+                pix = QPixmap.fromImage(frame11)   
+                pix = pix.scaledToWidth(345)
+                self.img_orign.setPixmap (pix)  # 在label上显示图片
+
+                #koutu  zai koutu_img  shang xianshi 
+                # 定义裁剪区域
+                # 格式：[起始x坐标, 起始y坐标, 宽度, 高度]
+                # 注意：坐标从左上角开始，x向右增加，y向下增加
+
+
+                crop_x = 960  # 起始x坐标
+                crop_y = 0   # 起始y坐标
+                crop_width = 384  # 裁剪宽度
+                crop_height = 270  # 裁剪高度
+
+                # 裁剪图片
+                # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
+                frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
+                frame_koutu = self.segment_one(frame_koutu,"sds")#在此处更新了self.average_hsv
+                len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
+                wid_koutu_y = frame_koutu.shape[0]
+                frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
+                  
+                pix_koutu = QPixmap.fromImage(frame_koutu)   
+                pix_koutu = pix_koutu.scaledToWidth(345)
+
+                self.koutu_img.setPixmap (pix_koutu)  # 在label上显示图片
+                if self.average_hsv is not None:
+                    self.list_hsv = self.average_hsv.tolist()
+                    if self.average_hsv is not None:
+                        self.list_hsv = [round(x, 2) for x in self.average_hsv.tolist()]
+                self.txt_hsv.setPlainText(str(self.list_hsv))
+                #return
+
+
+                if  self.mbus.trig_status[0] == 2 :
+                    print(self.average_hsv.tolist())
+                    for i in range(5):
+                        if self.hsv_in_range(self.list_hsv,self.color_ranges[i][0],self.color_ranges[i][1]):
+                            self.worker[1] = i
+                #     self.worker[1] = self.index%5
+                #     self.index+=1
+                text = self.worker
+                self.txt_hsv_2.setPlainText(str(text))
+
+
+                for i in range(5):
+                    try:
+                        b=i+1
+                        if  self.mbus.trig_status[b] == 2  :  
+                            if self.worker[b] != -1:
+                                self.worker[b+1] = self.worker[b]
+
+
+                        if  self.mbus.trig_status[b] == 1  :
+                            if self.worker[b+1] != i :#i是推杆的值
+                                self.trig_pusher(i)
+                                self.worker[b+1] = -1
+
+
+
+                    except:
+                        continue
+
     def hsv_in_range(self, average,lower,upper):
         #print("average111：",average)
 
