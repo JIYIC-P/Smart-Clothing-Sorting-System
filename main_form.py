@@ -681,25 +681,23 @@ class Dialog(QDialog,Ui_Dialog):
                     print(self.average_hsv.tolist())
                     for i in range(5):
                         if self.hsv_in_range(self.list_hsv,self.color_ranges[i][0],self.color_ranges[i][1]):
-                            self.worker[1] = i
-                #     self.worker[1] = self.index%5
-                #     self.index+=1
+                            self.worker[0] = i
                 text = self.worker
                 self.txt_hsv_2.setPlainText(str(text))
 
 
                 for i in range(5):
                     try:
-                        b=i+1
-                        if  self.mbus.trig_status[b] == 2  :  
-                            if self.worker[b] != -1:
-                                self.worker[b+1] = self.worker[b]
+
+                        if  self.mbus.trig_status[i+1] == 2  :  
+                            if self.worker[i] != -1:
+                                self.worker[i+1] = self.worker[i]
 
 
-                        if  self.mbus.trig_status[b] == 1  :
-                            if self.worker[b+1] != i :#i是推杆的值
+                        if  self.mbus.trig_status[i] == 1  :
+                            if self.worker[i+1] != i :#i是推杆的值
                                 self.trig_pusher(i)
-                                self.worker[b+1] = -1
+                                self.worker[i+1] = -1
 
 
 
