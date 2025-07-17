@@ -13,7 +13,7 @@ class ThreadedCamera:
 
         # 相机参数
         self.fps = 60
-        self.exposure = -9
+        self.exposure = -8
         self.resolution = [1920, 1080]
         self.brightness = 31
         self.contrast = 46
@@ -122,24 +122,14 @@ if __name__ == '__main__':
         while True:
             frame = camera.grab_frame()
             if frame is not None:
-                crop_x = 960  # 起始x坐标
-                crop_y = 0   # 起始y坐标
-                crop_width = 384  # 裁剪宽度
-                crop_height = 270  # 裁剪高度
-
-                # 裁剪图片
-                # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
-                frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
-                #frame_koutu = self.segment_one(frame_koutu,"sds")#在此处更新了self.average_hsv
-                len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
-                wid_koutu_y = frame_koutu.shape[0]
-                #frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                  
-                #pix_koutu = QPixmap.fromImage(frame_koutu)   
-                #pix_koutu = pix_koutu.scaledToWidth(345)
-
-                #self.koutu_img.setPixmap (pix_koutu)  # 在label上显示图片
-                cv2.imshow("Camera Feed", frame_koutu)
+                # crop_x = 960  # 起始x坐标
+                # crop_y = 0   # 起始y坐标
+                # crop_width = 384  # 裁剪宽度
+                # crop_height = 270  # 裁剪高度
+                # frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
+                # len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
+                # wid_koutu_y = frame_koutu.shape[0]
+                cv2.imshow("Camera Feed", frame)
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

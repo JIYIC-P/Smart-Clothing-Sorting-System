@@ -2,11 +2,11 @@ import time
 import sys
 from Ui_main_form import Ui_Dialog 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import configparser
 import json
 import os
+import random
 from datetime import datetime
 
 
@@ -92,7 +92,7 @@ class Dialog(QDialog,Ui_Dialog):
 #        self.init_trigger()
         self.average_hsv = None
         self.worker=[-1,-1,-1,-1,-1,-1]
-        self.pusher = [0,1,2,3,4]
+        self.pusher = [1,2,3,4,5]
        
 
 
@@ -146,16 +146,15 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def on_applay_clicked(self):
 
-        
         range_col= self.average_hsv
         uper_num=self.float_value.toPlainText()
         down_num=self.float_value.toPlainText()
-        index= self.choice_push.currentIndex()
-        for i in range(3):
-            self.color_ranges[index][0][i]= round(range_col[i]-int(down_num),2)
-            self.color_ranges[index][1][i]= round(range_col[i]+int(uper_num),2)
+        index = self.choice_push.currentIndex()
 
-        #print("self.color_ranges:",self.color_ranges)
+        for i in range(3):
+            self.color_ranges[index][0][i]= round(float(range_col[i])-int(down_num),2)
+            self.color_ranges[index][1][i]= round(float(range_col[i])+int(uper_num),2)
+
         # 将字典转为字符串后写入 INI
         cfg = configparser.ConfigParser()
         cfg['COLOR_RANGES'] = {'ranges': json.dumps(self.color_ranges)}
@@ -347,53 +346,7 @@ class Dialog(QDialog,Ui_Dialog):
         for each in self.btn_output:
             each.clicked.connect(lambda: self.btn_out_clicked(self.sender()))
 
-     
-
-
-
-    # def init_trigger(self):
-    #     """
-    #     初始化触发器
-    #     """
-        #self.reg_trigger = QTimer()
-        #self.reg_trigger.timeout.connect(self.trigger_check)
-        #self.reg_trigger.start(100)
-
-
-
-    # def trigger_check(self):
-    #     """
-    #     触发检查
-    #     """
-    #     for i in range(1,5):
-    #         if self.mbus.trig_status[i] == 1: #trig_down
-    #             t = self.mbus.count_trig_u[i]-self.mbus.count_trig_u[5]
-    #             print("trig :",self.mbus.trig_status)
-    #             print(f"tu[{i}]:",self.mbus.count_trig_u[i],"tu[5]",self.mbus.count_trig_u[5],"\ni:",i)
-
-    #             if len(cloth)>0 :
-    #                 if cloth[t] == i : #TODO:==推杆推动的条件 
-    #                     self.mbus.values[i-1] = 62580
-    #                     btn = self.btn_output[i-1]
-    #                     if  btn.accessibleDescription()=='0':
-    #                         btn.setAccessibleDescription("1")
-    #                     self.mbus.func = 1
-    #                     print("cloth before pop:",cloth)
-    #                     cloth.pop(t)
-    #                     print("cloth after  pop:",cloth)
-    #                     time.sleep(0.2)
-    #                     self.mbus.count_trig_u[5] += 1#在实际运行是该函数比控制更快，导致可能出现减两次,暂时使用延时等待策略，保证数据正确
-                        
-
-    #     if self.mbus.trig_status[5] == 1:
-    #         if len(cloth)>0 :
-    #             if cloth[0] < 0 : #TODO:==推杆推动的条件 
-    #                 self.mbus.values[4] = 62580
-    #                 self.mbus.func = 1
-    #                 cloth.pop(0)
-    #                 self.mbus.count_trig_u[5] += 1
-    #     elif self.mbus.trig_status[5] == 2: #trig_up
-    #         cloth.pop(0)
+    
 
 
 
@@ -494,157 +447,106 @@ class Dialog(QDialog,Ui_Dialog):
 
 
     def segment_one(self,img_in, out_dir):
-        #img_bgr = cv2.imread(path)
-        img_bgr=img_in
         img_bgr = cv2.cvtColor(img_in,cv2.COLOR_RGB2BGR)
-        #if img_bgr is None:
-        #    print(f'[WARN] 无法读取 {path}')
-        #    return
-        orig = img_bgr.copy()
-        #img_bgr = auto_resize(img_bgr, RESIZE_MAX)
-
-        # ========== 1. HSV 颜色分割：把传送带区域排除 ==========
-        hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-
-        # 以下范围需要根据自己传送带颜色再微调，这里给出一套“通用传送带”示例
-        # 如果传送带是灰色/米色，低饱和低亮度；衣物花色/白色则相反
-        # lower_belt = np.array([57, 0, 17])        # 低饱和、中低亮度
-        # upper_belt = np.array([180, 170, 230])    # 高亮度或低饱和均判为传送带
-
-        lower_belt = np.array([30, 0, 0])        # 低饱和、中低亮度
-        upper_belt = np.array([80, 255, 255])    # 高亮度或低饱和均判为传送带
-        belt_mask  = cv2.inRange(hsv, lower_belt, upper_belt)
-
-        # 反转：1 = 衣物，0 = 传送带
-        fg_mask = cv2.bitwise_not(belt_mask)
-
-        # ========== 2. 形态学闭运算，填补衣物内部空洞 ==========
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, CLOSE_KSIZE)
-        fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_CLOSE, kernel)
-
-        # ========== 3. 轮廓过滤（同原逻辑） ==========
-        contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        if not contours:
-            #print(f'[WARN] 未检测到衣物 {os.path.basename(path)}')  报错
-            print(f'[WARN] 未检测到衣物 ')   
-            pass
-
-        mask = np.zeros(img_bgr.shape[:2], dtype=np.uint8)
-        for cnt in sorted(contours, key=cv2.contourArea, reverse=True):
-            area = cv2.contourArea(cnt)
-            if area < MIN_AREA:
-                break
-            x, y, w, h = cv2.boundingRect(cnt)
-            ratio = max(w, h) / (min(w, h) + 1e-5)
-            if ratio > 5:
-                continue
-            cv2.drawContours(mask, [cnt], -1, 255, -1)
+        # ========== 5. 计算整张输入图的 HSV 均值（不改变任何已有逻辑） ==========
+        hsv_whole = cv2.cvtColor(img_in, cv2.COLOR_RGB2HSV)  # 与前面保持一致
+        self.average_hsv = hsv_whole.reshape(-1, 3).mean(axis=0)  # shape (3,) → H,S,V
 
 
-        # ========== 4. 输出透明 PNG ==========
-        h, w = orig.shape[:2]
-        scale = img_bgr.shape[1] / w
-        mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
-        b, g, r = cv2.split(orig)
-        rgba = cv2.merge((b, g, r, mask))
 
-        masked_image = cv2.bitwise_and(orig, orig, mask=mask)
-        non_zero_pixels = masked_image[mask > 0]
-        # if non_zero_pixels[:, 0].max() > 180:  # 检查 H 是否被错误缩放
-        #     non_zero_pixels[:, 0] = (non_zero_pixels[:, 0] / 255) * 180  # 从 0-255 映射回 0-180
-        # 计算平均值
-        if len(non_zero_pixels) > 0:  # 检查数组是否非空
+        if  self.mbus.trig_status[0] == 2:
+            out_dir  = 'result'
+            path= datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            os.makedirs(out_dir, exist_ok=True)
+            out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(path))[0] + '.png')
+            cv2.imwrite(path, img_bgr)
+            print(self.average_hsv)
+            print(f'[OK] 已保存 {out_path}')
+
+        
+        return img_bgr
+
+
+
+
+    # def segment_one(self,img_in, out_dir):
+
+    #     img_bgr=img_in
+    #     img_bgr = cv2.cvtColor(img_in,cv2.COLOR_RGB2BGR)
+    #     orig = img_bgr.copy()
+
+    #     # ========== 1. HSV 颜色分割：把传送带区域排除 ==========
+    #     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+
+    #     # 以下范围需要根据自己传送带颜色再微调，这里给出一套“通用传送带”示例
+    #     # 如果传送带是灰色/米色，低饱和低亮度；衣物花色/白色则相反
+    #     # lower_belt = np.array([57, 0, 17])        # 低饱和、中低亮度
+    #     # upper_belt = np.array([180, 170, 230])    # 高亮度或低饱和均判为传送带
+
+    #     lower_belt = np.array([30, 0, 0])        # 低饱和、中低亮度
+    #     upper_belt = np.array([80, 255, 255])    # 高亮度或低饱和均判为传送带
+    #     belt_mask  = cv2.inRange(hsv, lower_belt, upper_belt)
+
+    #     # 反转：1 = 衣物，0 = 传送带
+    #     fg_mask = cv2.bitwise_not(belt_mask)
+
+    #     # ========== 2. 形态学闭运算，填补衣物内部空洞 ==========
+    #     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, CLOSE_KSIZE)
+    #     fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_CLOSE, kernel)
+
+    #     # ========== 3. 轮廓过滤（同原逻辑） ==========
+    #     contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+    #     if not contours:
+    #         #print(f'[WARN] 未检测到衣物 {os.path.basename(path)}')  报错
+    #         #print(f'[WARN] 未检测到衣物 ')   
+    #         pass
+
+    #     mask = np.zeros(img_bgr.shape[:2], dtype=np.uint8)
+    #     for cnt in sorted(contours, key=cv2.contourArea, reverse=True):
+    #         area = cv2.contourArea(cnt)
+    #         if area < MIN_AREA:
+    #             break
+    #         x, y, w, h = cv2.boundingRect(cnt)
+    #         ratio = max(w, h) / (min(w, h) + 1e-5)
+    #         if ratio > 5:
+    #             continue
+    #         cv2.drawContours(mask, [cnt], -1, 255, -1)
+
+
+    #     # ========== 4. 输出透明 PNG ==========
+    #     h, w = orig.shape[:2]
+    #     scale = img_bgr.shape[1] / w
+    #     mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
+    #     b, g, r = cv2.split(orig)
+    #     rgba = cv2.merge((b, g, r, mask))
+
+    #     masked_image = cv2.bitwise_and(orig, orig, mask=mask)
+    #     non_zero_pixels = masked_image[mask > 0]
+    #     # if non_zero_pixels[:, 0].max() > 180:  # 检查 H 是否被错误缩放
+    #     #     non_zero_pixels[:, 0] = (non_zero_pixels[:, 0] / 255) * 180  # 从 0-255 映射回 0-180
+    #     #计算平均值
+    #     if len(non_zero_pixels) > 0:  # 检查数组是否非空
+    #         self.average_hsv = np.mean(non_zero_pixels, axis=0)
+
+
+
+    #     if  self.mbus.trig_status[0] == 2:
+    #          out_dir  = 'result'
+    #          path= datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    #          path1= datetime.now().strftime("%Y-%m-%d-%H-%M-%S-1")
+    #          os.makedirs(out_dir, exist_ok=True)
+    #          out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(path))[0] + '.png')
+    #          out_path1 = os.path.join(out_dir, os.path.splitext(os.path.basename(path1))[0] + '.png')
+    #          cv2.imwrite(out_path, masked_image)
+    #          cv2.imwrite(out_path1, orig)
+    #          print(self.average_hsv)
+    #          print(f'[OK] 已保存 {out_path}')
+
+        
+    #     return masked_image
     
-            self.average_hsv = np.mean(non_zero_pixels, axis=0)
-
-        if  self.mbus.trig_status[0] == 1:
-             out_dir  = 'result'
-             path= datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-             path1= datetime.now().strftime("%Y-%m-%d-%H-%M-%S-1")
-             os.makedirs(out_dir, exist_ok=True)
-             out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(path))[0] + '.png')
-             out_path1 = os.path.join(out_dir, os.path.splitext(os.path.basename(path))[0] + '.png')
-             cv2.imwrite(out_path, masked_image)
-             cv2.imwrite(out_path1, orig)
-             print(self.average_hsv)
-             print(f'[OK] 已保存 {out_path}')
-
-        
-        return masked_image
-
-    @pyqtSlot()
-    def show_img11(self):
-        if self.mode is not None:
-            myimg = self.streamer.grab_frame() 
-           
-            if myimg is not None:
-                frame = cv2.cvtColor(myimg,cv2.COLOR_BGR2RGB)
-                len_x = frame.shape[1]  # 获取图像大小
-                wid_y = frame.shape[0]
-                frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                
-                pix = QPixmap.fromImage(frame11)   
-                pix = pix.scaledToWidth(345)
-                self.img_orign.setPixmap (pix)  # 在label上显示图片
-
-                #koutu  zai koutu_img  shang xianshi 
-                # 定义裁剪区域
-                # 格式：[起始x坐标, 起始y坐标, 宽度, 高度]
-                # 注意：坐标从左上角开始，x向右增加，y向下增加
-
-
-                crop_x = 960  # 起始x坐标
-                crop_y = 0   # 起始y坐标
-                crop_width = 384  # 裁剪宽度
-                crop_height = 270  # 裁剪高度
-
-                # 裁剪图片
-                # OpenCV 的裁剪操作是通过 NumPy 的数组切片实现的
-                frame_koutu = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
-                frame_koutu = self.segment_one(frame_koutu,"sds")#在此处更新了self.average_hsv
-                len_koutu_x = frame_koutu.shape[1]  # 获取图像大小
-                wid_koutu_y = frame_koutu.shape[0]
-                frame_koutu = QImage(frame_koutu.data, len_koutu_x, wid_koutu_y, len_koutu_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                  
-                pix_koutu = QPixmap.fromImage(frame_koutu)   
-                pix_koutu = pix_koutu.scaledToWidth(345)
-
-                self.koutu_img.setPixmap (pix_koutu)  # 在label上显示图片
-                if self.average_hsv is not None:
-                    self.list_hsv = self.average_hsv.tolist()
-                    if self.average_hsv is not None:
-                        self.list_hsv = [round(x, 2) for x in self.average_hsv.tolist()]
-                self.txt_hsv.setPlainText(str(self.list_hsv))
-                #return
-
-
-                if  self.mbus.trig_status[0] == 2 :
-                    #print(self.average_hsv.tolist())
-                    for i in range(5):
-                        if self.hsv_in_range(self.list_hsv,self.color_ranges[i][0],self.color_ranges[i][1]):
-                            self.worker[1] = i
-                text = self.worker[1:6]+1
-                self.txt_hsv_2.setPlainText(str(text))
-
-
-                for i in range(5):
-                    try:
-                        b=i+1
-                        if  self.mbus.trig_status[b] == 2  :  
-                            if i!=self.worker[b]:
-                                self.worker[b+1]=self.worker[b]
-                                self.worker[b] = -1
-
-
-                        if  self.mbus.trig_status[b] == 1  :
-                            if self.worker[b] !=-1 :
-                                self.trig_pusher(i)
-
-
-                    except:
-                        continue
-
     @pyqtSlot()
     def show_img(self):
        
@@ -688,93 +590,41 @@ class Dialog(QDialog,Ui_Dialog):
                     if self.average_hsv is not None:
                         self.list_hsv = [round(x, 2) for x in self.average_hsv.tolist()]
                 self.txt_hsv.setPlainText(str(self.list_hsv))
-                #return
 
 
                 if  self.mbus.trig_status[0] == 2 :
+                    #self.on_applay_clicked()
                     print(self.list_hsv)
                     for i in range(5):
                         if self.hsv_in_range(self.list_hsv,self.color_ranges[i][0],self.color_ranges[i][1]):
-                            self.worker[0] = i
+                            self.worker[0] = i+1
                 text = self.worker
                 self.txt_hsv_2.setPlainText(str(text))
-
+                
 
                 for i in range(5):
                     try:
 
-                        if  self.mbus.trig_status[i+1] == 2  :  
+                        if  self.mbus.trig_status[i+1] == 1  :  
                             if self.worker[i] != -1:
                                 self.worker[i+1] = self.worker[i]
                                 self.worker[i] = -1
 
 
-                        if  self.mbus.trig_status[i+1] == 1  :
+                        if  self.mbus.trig_status[i+1] == 2  :
                             if self.worker[i+1] == self.pusher[i] :#i是推杆的值
                                 self.trig_pusher(i)
                                 self.worker[i+1] = -1
-
-
-
                     except:
                         continue
 
     def hsv_in_range(self, average,lower,upper):
-        #print("average111：",average)
-
-        # if (lower[0] <= average[0] <= upper[0] and
-        #     lower[1] <= average[1] <= upper[1] and
-        #     lower[2] <= average[2] <= upper[2]):
-        #     return True
-        # return False # 如果没有匹配的颜色范围，返回 None
         if len(average)>0:
-            if lower[0] <= average[0] <= upper[0] :
-                if lower[1] <= average[1] <= upper[1] :
-                    return True
-
-                if lower[2] <= average[2] <= upper[2] :
-                    return True
-
+            if (lower[0] <= average[0] <= upper[0] ):#and
+                # lower[1] <= average[1] <= upper[1] and
+                # lower[2] <= average[2] <= upper[2]):
+                return True
         return False # 如果没有匹配的颜色范围，返回 None
-
-
-        
-
-
-
-    def cutoff_img(self,img):
-        # 读取灰度图
-        #img = cv2.imread('333.jpg', 0)
-        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # Otsu自动阈值分割
-        _, binary = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        masked_image = cv2.bitwise_and(img, img, mask=binary)
-        non_zero_pixels = masked_image[binary > 0]
-
-        # 计算平均值
-        self.average_hsv = np.mean(non_zero_pixels, axis=0)
-        return  masked_image
-        
-
-
-
-
-    def match_shape(self,frame):
-        img_yolo = self.model(frame, verbose=False)
-        for result in img_yolo:
-        # 获取检测到的类别、置信度、边界框
-            for box in result.boxes:
-                class_id = int(box.cls)  # 类别ID
-                class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
-                confidence = float(box.conf)  # 置信度（0~1）
-                x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
-                print(f"检测到: {class_name}, 可信度: {confidence:.2f}, 位置: {x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}")                  
-                # 可以在这里做进一步处理，比如筛选高置信度的目标
-                if confidence > 0.6:
-                    print(f"高可信度目标: {class_name} ({confidence:.2f})")
-
-        frame = img_yolo[0].plot()    
-
 
 
 

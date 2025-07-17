@@ -188,13 +188,13 @@ class MBUS():
                 self.ADR_IN,
                 self.NUM_IN 
             )
-            for i in range(6):#0 保持 2 下降 1 上升
+            for i in range(6):#
                 if self.cur_reg[i] - self.pre_reg[i] > 0 :
-                    self.trig_status[i] = 2
+                    self.trig_status[i] = 1
 
                 elif self.cur_reg[i] - self.pre_reg[i] < 0:
-                    self.trig_status[i] = 1
-                    self.count_trig_u[i] += 1 #up计数
+                    self.trig_status[i] = 2
+                    #self.count_trig_u[i] += 1 #up计数
 
                 else : 
                     self.trig_status[i] = 0
