@@ -460,11 +460,9 @@ class Dialog(QDialog,Ui_Dialog):
             path= datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(path))[0] + '.png')
-            cv2.imwrite(path, img_bgr)
+            cv2.imwrite(out_path, img_bgr)
             print(self.average_hsv)
             print(f'[OK] 已保存 {out_path}')
-
-        
         return img_bgr
 
 
