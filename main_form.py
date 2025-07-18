@@ -89,7 +89,6 @@ class Dialog(QDialog,Ui_Dialog):
         self.mbus.sender.start()
         self.show_btn_output()
         self.show_btn_input()
-#        self.init_trigger()
         self.average_hsv = None
         self.worker=[-1,-1,-1,-1,-1,-1]
         self.pusher = [1,2,3,4,5]
@@ -393,7 +392,6 @@ class Dialog(QDialog,Ui_Dialog):
     @pyqtSlot()
     def on_btn_start_clicked(self):
         print("btn_start do")
-        #print(self.width(),self.height())
         #开始运行识别
         time.sleep(0.1)
         self.load_color_range()
@@ -410,6 +408,8 @@ class Dialog(QDialog,Ui_Dialog):
         self.txt_hsv_3.setPlainText(str(self.standrad_color))
 
 
+
+
     def load_color_range(self):
          # 读取 color.ini 并还原 self.color_ranges
         cfg = configparser.ConfigParser()
@@ -423,6 +423,8 @@ class Dialog(QDialog,Ui_Dialog):
         # 调试打印
         print("已重新加载 self.color_ranges:", self.color_ranges)
         self.get_std_color()
+
+
 
 
     @pyqtSlot()
@@ -449,7 +451,7 @@ class Dialog(QDialog,Ui_Dialog):
     def segment_one(self,img_in, out_dir):
         img_bgr = cv2.cvtColor(img_in,cv2.COLOR_RGB2BGR)
         
-        # ========== 5. 计算整张输入图的 HSV 均值（不改变任何已有逻辑） ==========
+        # ==========  计算整张输入图的 HSV 均值 ==========
         hsv_whole = cv2.cvtColor(img_in, cv2.COLOR_RGB2HSV)  # 与前面保持一致
         self.average_hsv = hsv_whole.reshape(-1, 3).mean(axis=0)  # shape (3,) → H,S,V
 
@@ -549,13 +551,13 @@ class Dialog(QDialog,Ui_Dialog):
     def show_img(self):
        
         if self.mode is not None:
-            myimg = self.streamer.grab_frame() 
+            myimg = self.streamer.grab_frame() #BGR 图像
             if myimg is not None:
-                frame = cv2.cvtColor(myimg,cv2.COLOR_BGR2RGB)
-                len_x = frame.shape[1]  # 获取图像大小
+                frame = cv2.cvtColor(myimg,cv2.COLOR_BGR2RGB) #RGB 图像
+
+                len_x = frame.shape[1]  # 获取图像大小                  self.streamer.resolution[0]
                 wid_y = frame.shape[0]
                 frame11 = QImage(frame.data, len_x, wid_y, len_x * 3, QImage.Format_RGB888)  # 此处如果不加len_x*3，就会发生倾斜
-                
                 pix = QPixmap.fromImage(frame11)   
                 pix = pix.scaledToWidth(345)
                 self.img_orign.setPixmap (pix)  # 在label上显示图片
@@ -610,7 +612,7 @@ class Dialog(QDialog,Ui_Dialog):
 
 
                         if  self.mbus.trig_status[i+1] == 2  :
-                            if self.worker[i+1] == self.pusher[i] :#i是推杆的值
+                            if self.worker[i+1] == self.pusher[i] :
                                 self.trig_pusher(i)
                                 self.worker[i+1] = -1
                     except:
@@ -830,6 +832,22 @@ class Dialog(QDialog,Ui_Dialog):
         self.tableWidget.setItem(row, 1, QTableWidgetItem(cfg_dat))
         self.tableWidget.setItem(row, 2, QTableWidgetItem(cfg_beizhu))
 
+
+    def match_shape(self,frame):
+            img_yolo = self.model(frame, verbose=False)
+            for result in img_yolo:
+            # 获取检测到的类别、置信度、边界框
+                for box in result.boxes:
+                    class_id = int(box.cls)  # 类别ID
+                    class_name = self.model.names[class_id]  # 类别名称（如 'person', 'car'）
+                    confidence = float(box.conf)  # 置信度（0~1）
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()  # 边界框坐标（左上、右下）
+                    print(f"检测到: {class_name}, 可信度: {confidence:.2f}, 位置: {x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}")                  
+                    # 可以在这里做进一步处理，比如筛选高置信度的目标
+                    if confidence > 0.6:
+                        print(f"高可信度目标: {class_name} ({confidence:.2f})")
+
+            frame = img_yolo[0].plot()    
 
 
 def main():

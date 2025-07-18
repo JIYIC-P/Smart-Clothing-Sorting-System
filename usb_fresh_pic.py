@@ -27,7 +27,7 @@ class ThreadedCamera:
                 raise Exception("无法打开相机")
             
             self.camera_opened = True
-            self.apply_camera_settings()
+            self.set_camera()
             
             # 启动帧更新线程
             self.thread = Thread(target=self.update, daemon=True)
@@ -38,7 +38,7 @@ class ThreadedCamera:
             self.camera_opened = False
             self._running = False
 
-    def apply_camera_settings(self):
+    def set_camera(self):
         """应用相机设置"""
         if not self.camera_opened:
             return
@@ -67,6 +67,8 @@ class ThreadedCamera:
 
         print(f"分辨率: {self.resolution}, FPS: {self.fps}, 曝光: {self.exposure}, "
               f"亮度: {self.brightness}, 对比度: {self.contrast}")
+        
+        
 
     def update(self):
         """更新视频帧"""
@@ -74,7 +76,7 @@ class ThreadedCamera:
             if not self.camera_opened:
                 try :
                     self.open_cam()
-                    self.apply_camera_settings()
+                    self.set_camera()
                 except:
                     time.sleep(0.1)  # 避免空转消耗CPU
                     print("FAILD")
