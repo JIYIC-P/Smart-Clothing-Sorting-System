@@ -143,12 +143,17 @@ class Dialog(QDialog,Ui_Dialog):
         
 
     @pyqtSlot()
-    def on_applay_clicked(self):
+    def on_btn_remeber_clicked(self):
 
         range_col= self.average_hsv
         uper_num=self.float_value.toPlainText()
         down_num=self.float_value.toPlainText()
         index = self.choice_push.currentIndex()
+
+        button_name = f"btn_motor_color_{index+1}"
+        button = getattr(self, button_name)  # 获取按钮对象
+        self.show_setcolors(button, range_col[0], range_col[1], range_col[2])
+
 
         for i in range(3):
             self.color_ranges[index][0][i]= round(float(range_col[i])-int(down_num),2)
@@ -849,6 +854,8 @@ class Dialog(QDialog,Ui_Dialog):
 
             frame = img_yolo[0].plot()    
 
+    def show_setcolors(self,btn,h,s,v):
+        btn.setStyleSheet(f"background-color:hsv({h}, {s}, {v})")
 
 def main():
     app = QApplication(sys.argv)
