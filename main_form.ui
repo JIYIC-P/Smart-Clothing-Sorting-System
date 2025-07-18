@@ -109,7 +109,7 @@
         </rect>
        </property>
       </widget>
-      <widget class="QPushButton" name="applay">
+      <widget class="QPushButton" name="btn_remember">
        <property name="geometry">
         <rect>
          <x>1010</x>
@@ -282,22 +282,6 @@
         <string>当前值</string>
        </property>
       </widget>
-      <widget class="QTextEdit" name="txt_hsv_3">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>630</y>
-         <width>1440</width>
-         <height>100</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_6">
        <property name="geometry">
         <rect>
@@ -309,6 +293,131 @@
        </property>
        <property name="text">
         <string>偏移量</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_motor_color_1">
+       <property name="geometry">
+        <rect>
+         <x>40</x>
+         <y>650</y>
+         <width>200</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_motor_color_2">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>650</y>
+         <width>200</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_motor_color_3">
+       <property name="geometry">
+        <rect>
+         <x>480</x>
+         <y>650</y>
+         <width>200</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_motor_color_4">
+       <property name="geometry">
+        <rect>
+         <x>920</x>
+         <y>650</y>
+         <width>200</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_motor_color_5">
+       <property name="geometry">
+        <rect>
+         <x>700</x>
+         <y>650</y>
+         <width>200</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </widget>
